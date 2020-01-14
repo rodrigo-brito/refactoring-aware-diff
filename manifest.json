@@ -1,0 +1,34 @@
+{
+    "name": "Refactoring Diff",
+    "version": "0.0.1",
+    "manifest_version": 2,
+    "description": "Diff utils for Github projects",
+    "homepage_url": "https://github.com/rodrigo-brito/refactoring-diff",
+    "icons": {
+        "16": "icons/icon16.png",
+        "48": "icons/icon48.png",
+        "128": "icons/icon128.png"
+    },
+    "browser_action": {
+        "default_icon": "icons/icon128.png"
+    },
+    "background": {
+        "scripts": ["src/bg/background.js"],
+        "persistent": false
+    },
+    "content_scripts": [
+        {
+            "run_at": "document_end",
+            "matches": ["https://github.com/*", "https://gist.github.com/*"],
+            "css": ["js/diff2html.min.css", "src/inject/inject.css"],
+            "js": ["js/diff2html.min.js", "src/inject/inject.js"]
+        }
+    ],
+    "permissions": [
+        "storage",
+        "contextMenus",
+        "activeTab",
+        "https://github.com/*",
+        "https://api.github.com/*"
+    ]
+}

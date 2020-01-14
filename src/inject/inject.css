@@ -1,0 +1,43 @@
+.btn-refector {
+    background: transparent;
+    float: right;
+}
+
+.blob-code-deletion .btn-refector {
+    border: 1px solid #cb2431;
+    color: #cb2431;
+}
+
+.blob-code-addition .btn-refector {
+    border: 1px solid #28a745;
+    color: #28a745;
+}
+
+.blob-code-deletion .btn-refector:hover {
+    background: #d06b73;
+}
+
+.blob-code-addition .btn-refector:hover {
+    background: #5fa76f;
+}
+
+.diff-refector-popup {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+
+    z-index: 999;
+    max-width: 500px;
+    background-color: #ffffff;
+    padding: 10px;
+    border-radius: 5px;
+
+    -webkit-box-shadow: 1px 1px 5px 0px rgba(0, 0, 0, 0.75);
+    -moz-box-shadow: 1px 1px 5px 0px rgba(0, 0, 0, 0.75);
+    box-shadow: 1px 1px 5px 0px rgba(0, 0, 0, 0.75);
+}
+
+.diff-refector-popup-close {
+    float: right;
+}
