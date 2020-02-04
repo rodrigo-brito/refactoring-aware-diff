@@ -1,11 +1,10 @@
-FROM golang:latest as build
+FROM golang:1.13 as build
 WORKDIR /app
 COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o server cmd/server/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -o server cmd/server/main.go
 
-FROM scratch
+FROM alpine
 WORKDIR /app
-COPY --from=build /app/server .
-COPY firebase.json .
-
+RUN apk --no-cache add ca-certificates
+COPY --from=build /app/server /app/server
 CMD ["/app/server"]
