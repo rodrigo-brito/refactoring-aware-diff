@@ -5,6 +5,8 @@ import (
 	"refdiff/pkg/action"
 	"refdiff/pkg/service"
 
+	"github.com/go-chi/cors"
+
 	firebase "firebase.google.com/go"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
@@ -27,7 +29,16 @@ func main() {
 
 	handler := action.NewHandler(refactoring)
 
+	cors := cors.New(cors.Options{
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"*"},
+		AllowCredentials: true,
+		MaxAge:           300,
+	})
+
 	router := chi.NewRouter()
+	router.Use(cors.Handler)
 	router.Use(middleware.DefaultLogger)
 	router.Get("/{user}/{project}/{pr}", handler.Get)
 	router.Post("/{user}/{project}/{pr}", handler.Save)
