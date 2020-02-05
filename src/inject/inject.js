@@ -2,6 +2,30 @@ window.addEventListener("load", function() {
     var popup = document.createElement("div");
     var baseLink = "#diff-8fceb9861aa1398ce0981de9a4427bdc";
 
+    var regex = /github\.com\/([\w_-]+)\/([\w_-]+)\/pull\/(\d+)\//g;
+    var urlParts = regex.exec(document.location.href);
+    if (!urlParts) {
+        return;
+    }
+
+    var userName = urlParts[1];
+    var projectName = urlParts[2];
+    var prNumber = +urlParts[3];
+
+    console.log(userName, projectName, prNumber);
+
+    fetch(`https://refdiff.brito.com.br/${userName}/${projectName}/${prNumber}`)
+        .then(function(response) {
+            if (response.ok) {
+                return response.json();
+            } else {
+                console.error("ReffDiff Server Error: ", response.statusText);
+            }
+        })
+        .then(function(response) {
+            console.log(response);
+        });
+
     popup.setAttribute("class", "diff-refector-popup");
     popup.innerHTML = `
         <button class="diff-refector-popup-close btn btn-sm btn-default">x</button>
@@ -65,7 +89,7 @@ window.addEventListener("load", function() {
     document
         .querySelectorAll(".code-review.blob-code.blob-code-deletion")
         .forEach(function(line) {
-            if (line.querySelectorAll(`[data-line="11"]`).length === 0) {
+            if (line.querySelectorAll(`[data-line="12"]`).length === 0) {
                 return;
             }
 

@@ -1,0 +1,13 @@
+{
+    "name": "inject",
+    "version": "1.0.0",
+    "main": "index.js",
+    "license": "MIT",
+    "scripts": {
+        "dev": "parcel watch inject.* --out-dir build/",
+        "build": "parcel build inject.* --out-dir build/"
+    },
+    "devDependencies": {
+        "parcel-bundler": "^1.12.4"
+    }
+}
