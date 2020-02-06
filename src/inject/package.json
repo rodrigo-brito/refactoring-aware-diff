@@ -4,10 +4,13 @@
     "main": "index.js",
     "license": "MIT",
     "scripts": {
-        "dev": "parcel watch inject.* --out-dir build/",
-        "build": "parcel build inject.* --out-dir build/"
+        "dev": "parcel --no-autoinstall --no-source-maps --no-hmr watch inject.* background.js --out-dir build/",
+        "build": "parcel --no-autoinstall --no-source-maps --no-hmr build inject.* background.js --out-dir build/"
     },
     "devDependencies": {
         "parcel-bundler": "^1.12.4"
+    },
+    "dependencies": {
+        "whatwg-fetch": "^3.0.0"
     }
 }

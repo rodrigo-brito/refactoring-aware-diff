@@ -1,30 +1,21 @@
+chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+    switch (request.message) {
+        case "data":
+            console.log(request.data);
+            break;
+        default:
+            console.log(request);
+    }
+});
+
 window.addEventListener("load", function() {
+    chrome.runtime.sendMessage({
+        message: "fetch",
+        url: document.location.href
+    });
+
     var popup = document.createElement("div");
     var baseLink = "#diff-8fceb9861aa1398ce0981de9a4427bdc";
-
-    var regex = /github\.com\/([\w_-]+)\/([\w_-]+)\/pull\/(\d+)\//g;
-    var urlParts = regex.exec(document.location.href);
-    if (!urlParts) {
-        return;
-    }
-
-    var userName = urlParts[1];
-    var projectName = urlParts[2];
-    var prNumber = +urlParts[3];
-
-    console.log(userName, projectName, prNumber);
-
-    fetch(`https://refdiff.brito.com.br/${userName}/${projectName}/${prNumber}`)
-        .then(function(response) {
-            if (response.ok) {
-                return response.json();
-            } else {
-                console.error("ReffDiff Server Error: ", response.statusText);
-            }
-        })
-        .then(function(response) {
-            console.log(response);
-        });
 
     popup.setAttribute("class", "diff-refector-popup");
     popup.innerHTML = `
