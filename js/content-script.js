@@ -1,22 +1,27 @@
+var fileMap = {};
+var popup = document.createElement("div");
+
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     switch (request.message) {
         case "data":
             console.log(request.data);
+            request.data.refactorings.forEach(refactoring => {
+                var file = fileMap[refactoring.after_file_name]; // TODO: change for before
+                if (file) {
+                    addRefactorings(file.ref, file.link, refactoring);
+                } else {
+                    console.error(
+                        "not found reference for " + refactoring.after_file_name
+                    );
+                }
+            });
             break;
         default:
-            console.log(request);
+            console.log("others: " + request);
     }
 });
 
 window.addEventListener("load", function() {
-    chrome.runtime.sendMessage({
-        message: "fetch",
-        url: document.location.href
-    });
-
-    var popup = document.createElement("div");
-    var baseLink = "#diff-8fceb9861aa1398ce0981de9a4427bdc";
-
     popup.setAttribute("class", "diff-refector-popup");
     popup.innerHTML = `
         <button class="diff-refector-popup-close btn btn-sm btn-default">x</button>
@@ -50,12 +55,41 @@ window.addEventListener("load", function() {
             popup.style.setProperty("display", "none");
         });
 
-    document
-        .querySelectorAll(".code-review.blob-code.blob-code-deletion")
-        .forEach(function(line) {
-            if (line.querySelectorAll(`[data-line="4"]`).length === 0) {
+    var files = document.querySelectorAll(".file");
+    files.forEach(file => {
+        var header = file.querySelector(".file-info > a");
+        var fileName = header.textContent;
+        var link = header.getAttribute("href");
+
+        console.log("File=" + fileName + " Link=" + link);
+
+        fileMap[fileName] = {
+            ref: file,
+            link: link
+        };
+    });
+
+    chrome.runtime.sendMessage({
+        message: "fetch",
+        url: document.location.href
+    });
+});
+
+function addRefactorings(file, link, refactoring) {
+    console.log("adding refactoring for ", refactoring);
+    console.log("REF = ", file);
+    file.querySelectorAll(".code-review.blob-code.blob-code-deletion").forEach(
+        function(line) {
+            console.log("seraching for ", refactoring.before_line_number);
+            if (
+                !line.querySelector(
+                    `[data-line="${refactoring.before_line_number}"]`
+                )
+            ) {
                 return;
             }
+
+            console.log("found line!!!!");
 
             var button = document.createElement("button");
             button.setAttribute("class", "btn-refector");
@@ -68,44 +102,13 @@ window.addEventListener("load", function() {
 
                 popup.showDiff(
                     button,
-                    "Move Method",
+                    `${refactoring.type} - ${refactoring.object_type}`,
                     moveMethodHTML,
-                    "#diff-8fceb9861aa1398ce0981de9a4427bdcR34-R37"
+                    link
                 );
             });
             button.innerText = "R";
             line.appendChild(button);
-        });
-
-    document
-        .querySelectorAll(".code-review.blob-code.blob-code-deletion")
-        .forEach(function(line) {
-            if (line.querySelectorAll(`[data-line="12"]`).length === 0) {
-                return;
-            }
-
-            var button = document.createElement("button");
-            button.setAttribute("class", "btn-refector");
-            button.addEventListener("click", function() {
-                var extractMethodDiff = `diff --git a/Example.java b/Example.java\nindex aa5aefd..36cbde8 100644\n--- a/Example.java\n+++ b/Example.java\n@@ -29,9 +18,26 @@ public class Example {\n+	public String Letters() {\n+		String result = "";\n+\n+		// letters\n+		result += "A";\n+		result += "B";\n+		result += "C";\n+		result += "D";\n+		result += "E";\n+\n+		return result;\n+	}`;
-                var extractMethodHTML = Diff2Html.getPrettyHtml(
-                    extractMethodDiff,
-                    {
-                        drawFileList: true,
-                        matching: "lines"
-                    }
-                );
-
-                console.log(extractMethodHTML);
-
-                popup.showDiff(
-                    button,
-                    "Extract Method",
-                    extractMethodHTML,
-                    "#diff-8fceb9861aa1398ce0981de9a4427bdcR21-R32"
-                );
-            });
-            button.innerText = "R";
-            line.appendChild(button);
-        });
-});
+        }
+    );
+}

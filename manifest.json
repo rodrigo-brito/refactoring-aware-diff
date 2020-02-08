@@ -13,15 +13,15 @@
         "default_icon": "icons/icon128.png"
     },
     "background": {
-        "scripts": ["src/inject/build/background.js"],
+        "scripts": ["js/build/background.js"],
         "persistent": false
     },
     "content_scripts": [
         {
             "run_at": "document_end",
-            "matches": ["https://github.com/*", "https://gist.github.com/*"],
-            "css": ["js/diff2html.min.css", "src/inject/build/inject.css"],
-            "js": ["js/diff2html.min.js", "src/inject/build/inject.js"]
+            "matches": ["https://github.com/*"],
+            "css": ["js/diff2html.min.css", "css/inject.css"],
+            "js": ["js/diff2html.min.js", "js/build/content-script.js"]
         }
     ],
     "permissions": [
