@@ -125,6 +125,7 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
 
   fetchData(changeInfo.url, function (data) {
     chrome.tabs.sendMessage(tabId, {
+      url: changeInfo.url,
       message: "data",
       data: data
     });
@@ -138,6 +139,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         currentWindow: true
       }, function (tabs) {
         chrome.tabs.sendMessage(tabs[0].id, {
+          url: request.url,
           message: "data",
           data: data
         });
@@ -154,7 +156,8 @@ function fetchData(url, callback) {
     return;
   }
 
-  fetch("https://refdiff.brito.com.br/".concat(urlParts[1], "/").concat(urlParts[2], "/").concat(urlParts[3])).then(function (response) {
+  fetch("https://refdiff.brito.com.br/".concat(urlParts[1], "/").concat(urlParts[2], "/").concat(urlParts[3], "?t=").concat(+new Date()) // TODO remove seed
+  ).then(function (response) {
     return response.json();
   }).then(function (data) {
     callback(data);

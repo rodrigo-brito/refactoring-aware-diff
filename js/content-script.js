@@ -1,23 +1,38 @@
 var fileMap = {};
 var popup = document.createElement("div");
+var currentPage = "";
+
+function urlEqual(baseURL, reference) {
+    return baseURL.split("#diff")[0] === reference.split("#diff")[0];
+}
 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     switch (request.message) {
         case "data":
-            console.log(request.data);
+            if (urlEqual(request.url, currentPage)) {
+                console.log("same page, skipping...");
+                return;
+            }
+            currentPage = request.url.split("#diff")[0];
+
+            console.log("DATA = ", request.data);
             request.data.refactorings.forEach(refactoring => {
-                var file = fileMap[refactoring.after_file_name]; // TODO: change for before
-                if (file) {
-                    addRefactorings(file.ref, file.link, refactoring);
-                } else {
-                    console.error(
-                        "not found reference for " + refactoring.after_file_name
-                    );
-                }
+                var beforeFile = fileMap[refactoring.before_file_name];
+                var afterFile = fileMap[refactoring.after_file_name];
+                addRefactorings(
+                    beforeFile.ref,
+                    `${afterFile.link}R${refactoring.after_line_number}`,
+                    refactoring,
+                    "L"
+                );
+
+                addRefactorings(
+                    afterFile.ref,
+                    `${beforeFile.link}L${refactoring.before_line_number}`,
+                    refactoring,
+                    "R"
+                );
             });
-            break;
-        default:
-            console.log("others: " + request);
     }
 });
 
@@ -25,14 +40,14 @@ window.addEventListener("load", function() {
     popup.setAttribute("class", "diff-refector-popup");
     popup.innerHTML = `
         <button class="diff-refector-popup-close btn btn-sm btn-default">x</button>
-        <p><b>Type:</b> <span class="refactor-type">Move Method</span></p>
-        <div class="refactor-diff"></div>
+        <p><b class="refactor-type"></b></p>
+        <div class="refactor-content"></div>
         <a class="btn btn-sm btn-primary refactor-link" href="#">Go to block</a>
     `;
 
     popup.showDiff = function(element, type, diffHTML, interval) {
         popup.style.setProperty("display", "block");
-        popup.querySelector(".refactor-diff").innerHTML = diffHTML;
+        popup.querySelector(".refactor-content").innerHTML = diffHTML;
         popup.querySelector(".refactor-type").innerText = type;
 
         if (interval) {
@@ -71,44 +86,54 @@ window.addEventListener("load", function() {
 
     chrome.runtime.sendMessage({
         message: "fetch",
-        url: document.location.href
+        url: document.location.href.split("#diff")[0]
     });
 });
 
-function addRefactorings(file, link, refactoring) {
+function addRefactorings(file, link, refactoring, side) {
     console.log("adding refactoring for ", refactoring);
-    console.log("REF = ", file);
-    file.querySelectorAll(".code-review.blob-code.blob-code-deletion").forEach(
-        function(line) {
-            console.log("seraching for ", refactoring.before_line_number);
-            if (
-                !line.querySelector(
-                    `[data-line="${refactoring.before_line_number}"]`
-                )
-            ) {
-                return;
-            }
 
-            console.log("found line!!!!");
+    // right side (addiction)
+    var lineNumber = refactoring.after_line_number;
+    var selector = ".code-review.blob-code.blob-code-addition";
 
-            var button = document.createElement("button");
-            button.setAttribute("class", "btn-refector");
-            button.addEventListener("click", function() {
-                var moveMethodDiff = `diff --git a/Example.java b/Example.java\nindex aa5aefd..36cbde8 100644\n--- a/Example.java\n+++ b/Example.java\n@@ -1,20 +1,9 @@\n import java.io.*;\n \n public class Example {\n	public void DoNothing() {\n-		System.out.println("do nothing");\n+		System.out.println("do something");\n	}\n`;
-                var moveMethodHTML = Diff2Html.getPrettyHtml(moveMethodDiff, {
-                    drawFileList: true,
-                    matching: "lines"
-                });
+    // left side (deletion)
+    if (side === "L") {
+        lineNumber = refactoring.before_line_number;
+        selector = ".code-review.blob-code.blob-code-deletion";
+    }
 
-                popup.showDiff(
-                    button,
-                    `${refactoring.type} - ${refactoring.object_type}`,
-                    moveMethodHTML,
-                    link
-                );
-            });
-            button.innerText = "R";
-            line.appendChild(button);
+    file.querySelectorAll(selector).forEach(line => {
+        console.log("seraching for ", lineNumber, "side = ", side);
+        if (!line.querySelector(`[data-line="${lineNumber}"]`)) {
+            return;
         }
-    );
+
+        var contentHTML;
+        switch (refactoring.type) {
+            case "RENAME":
+                contentHTML = `<p>${refactoring.before_local_name} to ${refactoring.after_local_name}</p>`;
+                break;
+            case "MOVE":
+                contentHTML = `<p>${refactoring.object_type} ${refactoring.before_local_name} moved.</p>`;
+                contentHTML += `<p>Origin: ${refactoring.before_file_name}:${refactoring.before_line_number}</p>`;
+                contentHTML += `<p>Destiny: ${refactoring.after_file_name}:${refactoring.after_line_number}</p>`;
+                break;
+        }
+
+        console.log("found line!!!!");
+
+        var button = document.createElement("button");
+        button.setAttribute("class", "btn-refector");
+        button.addEventListener("click", () => {
+            popup.showDiff(
+                button,
+                `${refactoring.type} ${refactoring.object_type}`,
+                contentHTML,
+                link
+            );
+        });
+        button.innerText = "R";
+        line.appendChild(button);
+    });
 }
