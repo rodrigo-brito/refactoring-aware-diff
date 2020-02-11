@@ -130,23 +130,35 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   switch (request.message) {
     case "data":
       if (urlEqual(request.url, currentPage)) {
-        console.log("same page, skipping...");
         return;
       }
 
       currentPage = request.url.split("#diff")[0];
+      var files = document.querySelectorAll(".file");
+      files.forEach(function (file) {
+        var header = file.querySelector(".file-info > a");
+        var fileName = header.textContent;
+        var link = header.getAttribute("href");
+        fileMap[fileName] = {
+          ref: file,
+          link: link
+        };
+      });
       console.log("DATA = ", request.data);
       request.data.refactorings.forEach(function (refactoring) {
         var beforeFile = fileMap[refactoring.before_file_name];
         var afterFile = fileMap[refactoring.after_file_name];
-        addRefactorings(beforeFile.ref, "".concat(afterFile.link, "R").concat(refactoring.after_line_number), refactoring, "L");
-        addRefactorings(afterFile.ref, "".concat(beforeFile.link, "L").concat(refactoring.before_line_number), refactoring, "R");
+
+        if (beforeFile && afterFile) {
+          addRefactorings(beforeFile.ref, "".concat(afterFile.link, "R").concat(refactoring.after_line_number), refactoring, "L");
+          addRefactorings(afterFile.ref, "".concat(beforeFile.link, "L").concat(refactoring.before_line_number), refactoring, "R");
+        }
       });
   }
 });
 window.addEventListener("load", function () {
   popup.setAttribute("class", "diff-refector-popup");
-  popup.innerHTML = "\n        <button class=\"diff-refector-popup-close btn btn-sm btn-default\">x</button>\n        <p><b class=\"refactor-type\"></b></p>\n        <div class=\"refactor-content\"></div>\n        <a class=\"btn btn-sm btn-primary refactor-link\" href=\"#\">Go to block</a>\n    ";
+  popup.innerHTML = "\n        <button class=\"diff-refector-popup-close btn btn-sm btn-default\">x</button>\n        <p><b class=\"refactor-type\"></b></p>\n        <div class=\"refactor-content\"></div>\n        <a class=\"btn btn-sm btn-primary refactor-link\" href=\"#\">Go to source</a>\n    ";
 
   popup.showDiff = function (element, type, diffHTML, interval) {
     popup.style.setProperty("display", "block");
@@ -167,17 +179,6 @@ window.addEventListener("load", function () {
   document.querySelector(".diff-refector-popup-close").addEventListener("click", function () {
     popup.style.setProperty("display", "none");
   });
-  var files = document.querySelectorAll(".file");
-  files.forEach(function (file) {
-    var header = file.querySelector(".file-info > a");
-    var fileName = header.textContent;
-    var link = header.getAttribute("href");
-    console.log("File=" + fileName + " Link=" + link);
-    fileMap[fileName] = {
-      ref: file,
-      link: link
-    };
-  });
   chrome.runtime.sendMessage({
     message: "fetch",
     url: document.location.href.split("#diff")[0]
@@ -196,8 +197,6 @@ function addRefactorings(file, link, refactoring, side) {
   }
 
   file.querySelectorAll(selector).forEach(function (line) {
-    console.log("seraching for ", lineNumber, "side = ", side);
-
     if (!line.querySelector("[data-line=\"".concat(lineNumber, "\"]"))) {
       return;
     }
@@ -206,17 +205,21 @@ function addRefactorings(file, link, refactoring, side) {
 
     switch (refactoring.type) {
       case "RENAME":
-        contentHTML = "<p>".concat(refactoring.before_local_name, " to ").concat(refactoring.after_local_name, "</p>");
+        contentHTML = "<p><code>".concat(refactoring.before_local_name, "</code> to <code>").concat(refactoring.after_local_name, "</code></p>");
         break;
 
       case "MOVE":
-        contentHTML = "<p>".concat(refactoring.object_type, " ").concat(refactoring.before_local_name, " moved.</p>");
-        contentHTML += "<p>Origin: ".concat(refactoring.before_file_name, ":").concat(refactoring.before_line_number, "</p>");
-        contentHTML += "<p>Destiny: ".concat(refactoring.after_file_name, ":").concat(refactoring.after_line_number, "</p>");
+        contentHTML = "<p><code>".concat(refactoring.before_local_name, "</code> moved.</p>");
+        contentHTML += "<p>Origin: <code>".concat(refactoring.before_file_name, ":").concat(refactoring.before_line_number, "</code></p>");
+        contentHTML += "<p>Destiny: <code>".concat(refactoring.after_file_name, ":").concat(refactoring.after_line_number, "</code></p>");
         break;
+
+      default:
+        contentHTML = "<p>".concat(refactoring.type, ": ").concat(refactoring.object_type, " <code>").concat(refactoring.before_local_name, "</code></p>");
+        contentHTML += "<p>Origin: <code>".concat(refactoring.before_file_name, ":").concat(refactoring.before_line_number, "</code></p>");
+        contentHTML += "<p>Destiny: <code>".concat(refactoring.after_file_name, ":").concat(refactoring.after_line_number, "</code></p>");
     }
 
-    console.log("found line!!!!");
     var button = document.createElement("button");
     button.setAttribute("class", "btn-refector");
     button.addEventListener("click", function () {
