@@ -1,8 +1,8 @@
 # Refactoring Aware Review - Chrome Plugin
 
-Chrome Extension for Refactoring Aware Review integration in Github Review.
+Chrome Extension for Refactoring Aware Review integration for Pull Requests in Github
 
-## Installation
+### Installation
 - Download or clone repository your computer
 
 ![image](https://user-images.githubusercontent.com/7620947/74889844-0049ef80-5361-11ea-8a38-f23cd5000643.png)
@@ -12,7 +12,7 @@ Chrome Extension for Refactoring Aware Review integration in Github Review.
 ![image](https://user-images.githubusercontent.com/7620947/74890021-882ff980-5361-11ea-8fd1-c7ab4e75f336.png)
 
 
-## Usage
+### Usage
 
 You can settup the Github Actions includinding this step in the pipeline:
 
@@ -32,7 +32,10 @@ steps:
     uses: rodrigo-brito/refdiff-github-action@master
 ```
 
-But, you can test the plugin in this example project: https://github.com/rodrigo-brito/refactoring-aware-review-example/pull/1/files
+
+### Demo Project
+
+Example of project with Refactoring Aware Review: https://github.com/rodrigo-brito/refactoring-aware-review-example/pull/1/files
 
 ## Preview
 
