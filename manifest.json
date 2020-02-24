@@ -20,8 +20,8 @@
         {
             "run_at": "document_end",
             "matches": ["https://github.com/*"],
-            "css": ["js/diff2html.min.css", "css/inject.css"],
-            "js": ["js/diff2html.min.js", "js/build/content-script.js"]
+            "css": ["css/inject.css"],
+            "js": ["js/build/content-script.js"]
         }
     ],
     "permissions": [

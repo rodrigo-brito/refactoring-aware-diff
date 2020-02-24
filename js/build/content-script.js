@@ -118,17 +118,34 @@ parcelRequire = (function (modules, cache, entry, globalName) {
 
   return newRequire;
 })({"content-script.js":[function(require,module,exports) {
+var LEFT_SIDE = "left";
+var RIGHT_SIDE = "right";
 var fileMap = {};
 var popup = document.createElement("div");
 var currentPage = "";
-var LEFT_SIDE = "left";
-var RIGHT_SIDE = "right";
 
 function urlEqual(baseURL, reference) {
   return baseURL.split("#diff")[0] === reference.split("#diff")[0];
 }
+/**
+ * Update global file map after url change
+ */
 
-chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+
+function updateFileMap() {
+  var files = document.querySelectorAll(".file");
+  files.forEach(function (file) {
+    var header = file.querySelector(".file-info > a");
+    var fileName = header.textContent;
+    var link = header.getAttribute("href");
+    fileMap[fileName] = {
+      ref: file,
+      link: link
+    };
+  });
+}
+
+chrome.runtime.onMessage.addListener(function (request) {
   switch (request.message) {
     case "data":
       if (urlEqual(request.url, currentPage)) {
@@ -136,16 +153,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
       }
 
       currentPage = request.url.split("#diff")[0];
-      var files = document.querySelectorAll(".file");
-      files.forEach(function (file) {
-        var header = file.querySelector(".file-info > a");
-        var fileName = header.textContent;
-        var link = header.getAttribute("href");
-        fileMap[fileName] = {
-          ref: file,
-          link: link
-        };
-      });
+      updateFileMap();
       request.data.refactorings.forEach(function (refactoring) {
         addRefactorings(fileMap, refactoring, LEFT_SIDE);
         addRefactorings(fileMap, refactoring, RIGHT_SIDE);
@@ -168,7 +176,7 @@ window.addEventListener("load", function () {
     } // pop-up offset to align box in left side
 
 
-    var offset = (popupPosition = popup.getBoundingClientRect().width) + 10;
+    var offset = popup.getBoundingClientRect().width + 10;
     var bounds = element.getBoundingClientRect();
     var left = (window.pageXOffset || element.scrollLeft) + bounds.left;
     var top = (window.pageYOffset || element.scrollTop) + bounds.top;

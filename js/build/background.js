@@ -118,7 +118,7 @@ parcelRequire = (function (modules, cache, entry, globalName) {
 
   return newRequire;
 })({"background.js":[function(require,module,exports) {
-chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
+chrome.tabs.onUpdated.addListener(function (tabId, changeInfo) {
   if (!changeInfo.url) {
     return;
   }
@@ -131,7 +131,7 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
     });
   });
 });
-chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+chrome.runtime.onMessage.addListener(function (request) {
   if (request.message === "fetch") {
     fetchData(request.url, function (data) {
       chrome.tabs.query({

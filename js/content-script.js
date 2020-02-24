@@ -1,32 +1,47 @@
-let fileMap = {};
-let popup = document.createElement("div");
-let currentPage = "";
 const LEFT_SIDE = "left";
 const RIGHT_SIDE = "right";
 
+let fileMap = {};
+let popup = document.createElement("div");
+let currentPage = "";
+
+/**
+ * Check if Github URLs are equal
+ * @param {String} baseURL
+ * @param {String} reference
+ */
 function urlEqual(baseURL, reference) {
     return baseURL.split("#diff")[0] === reference.split("#diff")[0];
 }
 
-chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+/**
+ * Update global file map after url change
+ */
+function updateFileMap() {
+    let files = document.querySelectorAll(".file");
+    files.forEach(file => {
+        let header = file.querySelector(".file-info > a");
+        let fileName = header.textContent;
+        let link = header.getAttribute("href");
+
+        fileMap[fileName] = {
+            ref: file,
+            link: link
+        };
+    });
+}
+
+/**
+ * Message receiver to handle data
+ */
+chrome.runtime.onMessage.addListener(function(request) {
     switch (request.message) {
         case "data":
             if (urlEqual(request.url, currentPage)) {
                 return;
             }
             currentPage = request.url.split("#diff")[0];
-
-            let files = document.querySelectorAll(".file");
-            files.forEach(file => {
-                let header = file.querySelector(".file-info > a");
-                let fileName = header.textContent;
-                let link = header.getAttribute("href");
-
-                fileMap[fileName] = {
-                    ref: file,
-                    link: link
-                };
-            });
+            updateFileMap();
 
             request.data.refactorings.forEach(refactoring => {
                 addRefactorings(fileMap, refactoring, LEFT_SIDE);
@@ -35,6 +50,9 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     }
 });
 
+/**
+ * Plugin initialization after page load
+ */
 window.addEventListener("load", function() {
     popup.setAttribute("class", "diff-refector-popup");
     popup.innerHTML = `
@@ -56,7 +74,7 @@ window.addEventListener("load", function() {
         }
 
         // pop-up offset to align box in left side
-        let offset = (popupPosition = popup.getBoundingClientRect().width) + 10;
+        let offset = popup.getBoundingClientRect().width + 10;
 
         let bounds = element.getBoundingClientRect();
         let left = (window.pageXOffset || element.scrollLeft) + bounds.left;
@@ -73,12 +91,19 @@ window.addEventListener("load", function() {
             popup.style.setProperty("display", "none");
         });
 
+    // Request background task refactorings
     chrome.runtime.sendMessage({
         message: "fetch",
         url: document.location.href.split("#diff")[0]
     });
 });
 
+/**
+ *
+ * @param {Object} fileMap pair of file and page anchor
+ * @param {Object} refactoring refactoring data
+ * @param {LEFT_SIDE|RIGHT_SIDE} side diff side
+ */
 function addRefactorings(fileMap, refactoring, side) {
     let beforeFile = fileMap[refactoring.before_file_name];
     let afterFile = fileMap[refactoring.after_file_name];
