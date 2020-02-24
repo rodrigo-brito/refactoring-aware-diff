@@ -1,0 +1,5 @@
+name: "RefDiff - Refactoring Detector"
+description: "Refatoring detector based on RefDiff"
+runs:
+    using: "docker"
+    image: "Dockerfile"
