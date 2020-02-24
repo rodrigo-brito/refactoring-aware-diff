@@ -121,6 +121,8 @@ parcelRequire = (function (modules, cache, entry, globalName) {
 var fileMap = {};
 var popup = document.createElement("div");
 var currentPage = "";
+var LEFT_SIDE = "left";
+var RIGHT_SIDE = "right";
 
 function urlEqual(baseURL, reference) {
   return baseURL.split("#diff")[0] === reference.split("#diff")[0];
@@ -144,15 +146,9 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
           link: link
         };
       });
-      console.log("DATA = ", request.data);
       request.data.refactorings.forEach(function (refactoring) {
-        var beforeFile = fileMap[refactoring.before_file_name];
-        var afterFile = fileMap[refactoring.after_file_name];
-
-        if (beforeFile && afterFile) {
-          addRefactorings(beforeFile.ref, "".concat(afterFile.link, "R").concat(refactoring.after_line_number), refactoring, "L");
-          addRefactorings(afterFile.ref, "".concat(beforeFile.link, "L").concat(refactoring.before_line_number), refactoring, "R");
-        }
+        addRefactorings(fileMap, refactoring, LEFT_SIDE);
+        addRefactorings(fileMap, refactoring, RIGHT_SIDE);
       });
   }
 });
@@ -160,19 +156,24 @@ window.addEventListener("load", function () {
   popup.setAttribute("class", "diff-refector-popup");
   popup.innerHTML = "\n        <button class=\"diff-refector-popup-close btn btn-sm btn-default\">x</button>\n        <p><b class=\"refactor-type\"></b></p>\n        <div class=\"refactor-content\"></div>\n        <a class=\"btn btn-sm btn-primary refactor-link\" href=\"#\">Go to source</a>\n    ";
 
-  popup.showDiff = function (element, type, diffHTML, interval) {
+  popup.show = function (element, type, diffHTML, link, buttonText) {
     popup.style.setProperty("display", "block");
     popup.querySelector(".refactor-content").innerHTML = diffHTML;
     popup.querySelector(".refactor-type").innerText = type;
 
-    if (interval) {
-      popup.querySelector(".refactor-link").setAttribute("href", interval);
-    }
+    if (link) {
+      var button = popup.querySelector(".refactor-link");
+      button.setAttribute("href", link);
+      button.textContent = buttonText;
+    } // pop-up offset to align box in left side
+
 
     var offset = (popupPosition = popup.getBoundingClientRect().width) + 10;
-    var pos = element.getBoundingClientRect();
-    popup.style.setProperty("top", pos.top + "px");
-    popup.style.setProperty("left", pos.left - offset + "px");
+    var bounds = element.getBoundingClientRect();
+    var left = (window.pageXOffset || element.scrollLeft) + bounds.left;
+    var top = (window.pageYOffset || element.scrollTop) + bounds.top;
+    popup.style.setProperty("top", top + "px");
+    popup.style.setProperty("left", left - offset + "px");
   };
 
   document.body.appendChild(popup);
@@ -185,18 +186,25 @@ window.addEventListener("load", function () {
   });
 });
 
-function addRefactorings(file, link, refactoring, side) {
-  console.log("adding refactoring for ", refactoring); // right side (addiction)
+function addRefactorings(fileMap, refactoring, side) {
+  var beforeFile = fileMap[refactoring.before_file_name];
+  var afterFile = fileMap[refactoring.after_file_name]; // right side (addiction)
 
   var lineNumber = refactoring.after_line_number;
-  var selector = ".code-review.blob-code.blob-code-addition"; // left side (deletion)
+  var selector = ".blob-code.blob-code-addition";
+  var link = "".concat(beforeFile.link, "L").concat(refactoring.before_line_number);
+  var buttonText = "Go to source";
+  var baseFile = afterFile.ref; // left side (deletion)
 
-  if (side === "L") {
+  if (side === LEFT_SIDE) {
     lineNumber = refactoring.before_line_number;
-    selector = ".code-review.blob-code.blob-code-deletion";
+    selector = ".blob-code.blob-code-deletion";
+    link = "".concat(afterFile.link, "R").concat(refactoring.after_line_number);
+    buttonText = "Go to target";
+    baseFile = beforeFile.ref;
   }
 
-  file.querySelectorAll(selector).forEach(function (line) {
+  baseFile.querySelectorAll(selector).forEach(function (line) {
     if (!line.querySelector("[data-line=\"".concat(lineNumber, "\"]"))) {
       return;
     }
@@ -210,20 +218,20 @@ function addRefactorings(file, link, refactoring, side) {
 
       case "MOVE":
         contentHTML = "<p><code>".concat(refactoring.before_local_name, "</code> moved.</p>");
-        contentHTML += "<p>Origin: <code>".concat(refactoring.before_file_name, ":").concat(refactoring.before_line_number, "</code></p>");
-        contentHTML += "<p>Destiny: <code>".concat(refactoring.after_file_name, ":").concat(refactoring.after_line_number, "</code></p>");
+        contentHTML += "<p>Source: <code>".concat(refactoring.before_file_name, ":").concat(refactoring.before_line_number, "</code></p>");
+        contentHTML += "<p>Target: <code>".concat(refactoring.after_file_name, ":").concat(refactoring.after_line_number, "</code></p>");
         break;
 
       default:
         contentHTML = "<p>".concat(refactoring.type, ": ").concat(refactoring.object_type, " <code>").concat(refactoring.before_local_name, "</code></p>");
-        contentHTML += "<p>Origin: <code>".concat(refactoring.before_file_name, ":").concat(refactoring.before_line_number, "</code></p>");
-        contentHTML += "<p>Destiny: <code>".concat(refactoring.after_file_name, ":").concat(refactoring.after_line_number, "</code></p>");
+        contentHTML += "<p>Source: <code>".concat(refactoring.before_file_name, ":").concat(refactoring.before_line_number, "</code></p>");
+        contentHTML += "<p>Target: <code>".concat(refactoring.after_file_name, ":").concat(refactoring.after_line_number, "</code></p>");
     }
 
     var button = document.createElement("button");
     button.setAttribute("class", "btn-refector");
     button.addEventListener("click", function () {
-      popup.showDiff(button, "".concat(refactoring.type, " ").concat(refactoring.object_type), contentHTML, link);
+      popup.show(button, "".concat(refactoring.type, " ").concat(refactoring.object_type), contentHTML, link, buttonText);
     });
     button.innerText = "R";
     line.appendChild(button);

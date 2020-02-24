@@ -23,11 +23,11 @@
 
 .diff-refector-popup {
     display: none;
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
 
-    z-index: 999;
+    z-index: 7;
     max-width: 500px;
     background-color: #ffffff;
     padding: 10px;
