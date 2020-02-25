@@ -1,4 +1,4 @@
-package moveclass;
+package moveclass.subpackage;
 
 public class A {
 	public void M1() {
