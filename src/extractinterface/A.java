@@ -1,6 +1,6 @@
 package extractinterface;
 
-public class A {
+public class A implements AIface {
 	public void M1() {
 		System.out.println("M1");
 	}
