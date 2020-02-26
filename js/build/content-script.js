@@ -123,6 +123,11 @@ var RIGHT_SIDE = "right";
 var fileMap = {};
 var popup = document.createElement("div");
 var currentPage = "";
+/**
+ * Check if Github URLs are equal
+ * @param {String} baseURL
+ * @param {String} reference
+ */
 
 function urlEqual(baseURL, reference) {
   return baseURL.split("#diff")[0] === reference.split("#diff")[0];
@@ -144,6 +149,10 @@ function updateFileMap() {
     };
   });
 }
+/**
+ * Message receiver to handle data
+ */
+
 
 chrome.runtime.onMessage.addListener(function (request) {
   switch (request.message) {
@@ -153,13 +162,19 @@ chrome.runtime.onMessage.addListener(function (request) {
       }
 
       currentPage = request.url.split("#diff")[0];
-      updateFileMap();
-      request.data.refactorings.forEach(function (refactoring) {
-        addRefactorings(fileMap, refactoring, LEFT_SIDE);
-        addRefactorings(fileMap, refactoring, RIGHT_SIDE);
-      });
+      setTimeout(function () {
+        updateFileMap();
+        request.data.refactorings.forEach(function (refactoring) {
+          addRefactorings(fileMap, refactoring, LEFT_SIDE);
+          addRefactorings(fileMap, refactoring, RIGHT_SIDE);
+        });
+      }, 2000);
   }
 });
+/**
+ * Plugin initialization after page load
+ */
+
 window.addEventListener("load", function () {
   popup.setAttribute("class", "diff-refector-popup");
   popup.innerHTML = "\n        <button class=\"diff-refector-popup-close btn btn-sm btn-default\">x</button>\n        <p><b class=\"refactor-type\"></b></p>\n        <div class=\"refactor-content\"></div>\n        <a class=\"btn btn-sm btn-primary refactor-link\" href=\"#\">Go to source</a>\n    ";
@@ -187,29 +202,41 @@ window.addEventListener("load", function () {
   document.body.appendChild(popup);
   document.querySelector(".diff-refector-popup-close").addEventListener("click", function () {
     popup.style.setProperty("display", "none");
-  });
+  }); // Request background task refactorings
+
   chrome.runtime.sendMessage({
     message: "fetch",
     url: document.location.href.split("#diff")[0]
   });
 });
+/**
+ *
+ * @param {Object} fileMap pair of file and page anchor
+ * @param {Object} refactoring refactoring data
+ * @param {LEFT_SIDE|RIGHT_SIDE} side diff side
+ */
 
 function addRefactorings(fileMap, refactoring, side) {
   var beforeFile = fileMap[refactoring.before_file_name];
-  var afterFile = fileMap[refactoring.after_file_name]; // right side (addiction)
+  var afterFile = fileMap[refactoring.after_file_name];
+
+  if (!beforeFile || !afterFile) {
+    return;
+  } // right side (addiction)
+
 
   var lineNumber = refactoring.after_line_number;
   var selector = ".blob-code.blob-code-addition";
-  var link = "".concat(beforeFile.link, "L").concat(refactoring.before_line_number);
   var buttonText = "Go to source";
-  var baseFile = afterFile.ref; // left side (deletion)
+  var baseFile = afterFile.ref;
+  var link = "".concat(beforeFile.link, "L").concat(refactoring.before_line_number); // left side (deletion)
 
   if (side === LEFT_SIDE) {
     lineNumber = refactoring.before_line_number;
     selector = ".blob-code.blob-code-deletion";
-    link = "".concat(afterFile.link, "R").concat(refactoring.after_line_number);
     buttonText = "Go to target";
     baseFile = beforeFile.ref;
+    link = "".concat(afterFile.link, "R").concat(refactoring.after_line_number);
   }
 
   baseFile.querySelectorAll(selector).forEach(function (line) {

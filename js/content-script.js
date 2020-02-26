@@ -40,13 +40,16 @@ chrome.runtime.onMessage.addListener(function(request) {
             if (urlEqual(request.url, currentPage)) {
                 return;
             }
-            currentPage = request.url.split("#diff")[0];
-            updateFileMap();
 
-            request.data.refactorings.forEach(refactoring => {
-                addRefactorings(fileMap, refactoring, LEFT_SIDE);
-                addRefactorings(fileMap, refactoring, RIGHT_SIDE);
-            });
+            currentPage = request.url.split("#diff")[0];
+            setTimeout(function() {
+                updateFileMap();
+
+                request.data.refactorings.forEach(refactoring => {
+                    addRefactorings(fileMap, refactoring, LEFT_SIDE);
+                    addRefactorings(fileMap, refactoring, RIGHT_SIDE);
+                });
+            }, 2000);
     }
 });
 
@@ -108,20 +111,24 @@ function addRefactorings(fileMap, refactoring, side) {
     let beforeFile = fileMap[refactoring.before_file_name];
     let afterFile = fileMap[refactoring.after_file_name];
 
+    if (!beforeFile || !afterFile) {
+        return;
+    }
+
     // right side (addiction)
     let lineNumber = refactoring.after_line_number;
     let selector = ".blob-code.blob-code-addition";
-    let link = `${beforeFile.link}L${refactoring.before_line_number}`;
     let buttonText = "Go to source";
     let baseFile = afterFile.ref;
+    let link = `${beforeFile.link}L${refactoring.before_line_number}`;
 
     // left side (deletion)
     if (side === LEFT_SIDE) {
         lineNumber = refactoring.before_line_number;
         selector = ".blob-code.blob-code-deletion";
-        link = `${afterFile.link}R${refactoring.after_line_number}`;
         buttonText = "Go to target";
         baseFile = beforeFile.ref;
+        link = `${afterFile.link}R${refactoring.after_line_number}`;
     }
 
     baseFile.querySelectorAll(selector).forEach(line => {
