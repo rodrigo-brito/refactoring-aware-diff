@@ -1,19 +1,16 @@
 # Refactoring-Aware Diff
 
 ![Tests and Lint](https://github.com/rodrigo-brito/refactoring-aware-review/workflows/Tests%20and%20Lint/badge.svg)
+![Chrome Web Store](https://img.shields.io/chrome-web-store/v/bclbegekihgpelanbbleaceefgmekjdd?style=plastic)
 [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://lbesson.mit-license.org/)
 
 Adds refactoring annotations to GitHub diffs.
 
 ### Installation
 
--   Download or clone repository your computer
-
-![image](https://user-images.githubusercontent.com/7620947/74889844-0049ef80-5361-11ea-8a38-f23cd5000643.png)
-
--   Open Chrome Extensions (chrome://extensions/) page and load plugin with `Load Unpacked` button:
-
-![image](https://user-images.githubusercontent.com/7620947/74890021-882ff980-5361-11ea-8fd1-c7ab4e75f336.png)
+<a href="https://chrome.google.com/webstore/detail/refactoring-aware-diff/bclbegekihgpelanbbleaceefgmekjdd">
+<img width="300px" src="https://user-images.githubusercontent.com/7620947/75341916-26e1bc00-5874-11ea-9526-463ddf1e7f82.png" />
+</a>
 
 ### Usage
 
@@ -32,7 +29,7 @@ steps:
           LANGUAGE: ${{ github.event.repository.language }}
           REV_BEFORE: ${{ github.event.pull_request.base.sha }}
           REV_AFTER: ${{ github.event.pull_request.head.sha }}
-      uses: rodrigo-brito/refdiff-github-action@master
+      uses: rodrigo-brito/refactoring-aware-review@action
 ```
 
 ### Demo Project

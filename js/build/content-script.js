@@ -148,6 +148,7 @@ function updateFileMap() {
       link: link
     };
   });
+  return files.length > 0;
 }
 /**
  * Message receiver to handle data
@@ -155,20 +156,35 @@ function updateFileMap() {
 
 
 chrome.runtime.onMessage.addListener(function (request) {
+  var delayToUpdate = 0;
+
   switch (request.message) {
     case "data":
       if (urlEqual(request.url, currentPage)) {
         return;
       }
 
-      currentPage = request.url.split("#diff")[0];
+      currentPage = request.url.split("#diff")[0]; // check if diff files are loaded
+
+      if (!updateFileMap()) {
+        delayToUpdate = 1000; // 1 sec.
+      }
+
       setTimeout(function () {
-        updateFileMap();
+        if (delayToUpdate > 0) {
+          updateFileMap();
+        } // avoid insert duplication with delayed requests
+
+
+        if (document.querySelector(".btn-refector")) {
+          return;
+        }
+
         request.data.refactorings.forEach(function (refactoring) {
           addRefactorings(fileMap, refactoring, LEFT_SIDE);
           addRefactorings(fileMap, refactoring, RIGHT_SIDE);
         });
-      }, 2000);
+      }, delayToUpdate);
   }
 });
 /**
@@ -245,6 +261,7 @@ function addRefactorings(fileMap, refactoring, side) {
     }
 
     var contentHTML;
+    var title = "".concat(refactoring.type, " ").concat(refactoring.object_type);
 
     switch (refactoring.type) {
       case "RENAME":
@@ -252,13 +269,26 @@ function addRefactorings(fileMap, refactoring, side) {
         break;
 
       case "MOVE":
-        contentHTML = "<p><code>".concat(refactoring.before_local_name, "</code> moved.</p>");
+        contentHTML = "<p><code>".concat(refactoring.object_type.toLowerCase(), " ").concat(refactoring.before_local_name, "</code> moved.</p>");
+        contentHTML += "<p>Source: <code>".concat(refactoring.before_file_name, ":").concat(refactoring.before_line_number, "</code></p>");
+        contentHTML += "<p>Target: <code>".concat(refactoring.after_file_name, ":").concat(refactoring.after_line_number, "</code></p>");
+        break;
+
+      case "EXTRACT_SUPER":
+        title = "EXTRACT " + refactoring.object_type;
+        contentHTML = "<p><code>".concat(refactoring.object_type.toLowerCase(), " ").concat(refactoring.before_local_name, "</code> extracted to super class.</p>");
+        contentHTML += "<p>Source: <code>".concat(refactoring.before_file_name, ":").concat(refactoring.before_line_number, "</code></p>");
+        contentHTML += "<p>Target: <code>".concat(refactoring.after_file_name, ":").concat(refactoring.after_line_number, "</code></p>");
+        break;
+
+      case "EXTRACT":
+        contentHTML = "<p><code>".concat(refactoring.object_type.toLowerCase(), " ").concat(refactoring.before_local_name, "</code> extracted.</p>");
         contentHTML += "<p>Source: <code>".concat(refactoring.before_file_name, ":").concat(refactoring.before_line_number, "</code></p>");
         contentHTML += "<p>Target: <code>".concat(refactoring.after_file_name, ":").concat(refactoring.after_line_number, "</code></p>");
         break;
 
       default:
-        contentHTML = "<p>".concat(refactoring.type, ": ").concat(refactoring.object_type, " <code>").concat(refactoring.before_local_name, "</code></p>");
+        contentHTML = "<p>".concat(refactoring.type, ": ").concat(refactoring.object_type.toLowerCase(), " <code>").concat(refactoring.before_local_name, "</code></p>");
         contentHTML += "<p>Source: <code>".concat(refactoring.before_file_name, ":").concat(refactoring.before_line_number, "</code></p>");
         contentHTML += "<p>Target: <code>".concat(refactoring.after_file_name, ":").concat(refactoring.after_line_number, "</code></p>");
     }
@@ -266,7 +296,7 @@ function addRefactorings(fileMap, refactoring, side) {
     var button = document.createElement("button");
     button.setAttribute("class", "btn-refector");
     button.addEventListener("click", function () {
-      popup.show(button, "".concat(refactoring.type, " ").concat(refactoring.object_type), contentHTML, link, buttonText);
+      popup.show(button, title, contentHTML, link, buttonText);
     });
     button.innerText = "R";
     line.appendChild(button);
