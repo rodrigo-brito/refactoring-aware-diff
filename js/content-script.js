@@ -43,6 +43,7 @@ chrome.runtime.onMessage.addListener(function(request) {
                 return;
             }
 
+            popup.style.setProperty("display", "none");
             currentPage = request.url.split("#diff")[0];
 
             // check if diff files are loaded
@@ -50,7 +51,7 @@ chrome.runtime.onMessage.addListener(function(request) {
                 delayToUpdate = 1000; // 1 sec.
             }
 
-            setTimeout(function() {
+            setTimeout(() => {
                 if (delayToUpdate > 0) {
                     updateFileMap();
                 }
@@ -155,7 +156,7 @@ function addRefactorings(fileMap, refactoring, side) {
         let title = `${refactoring.type} ${refactoring.object_type}`;
         switch (refactoring.type) {
             case "RENAME":
-                contentHTML = `<p><code>${refactoring.before_local_name}</code> to <code>${refactoring.after_local_name}</code></p>`;
+                contentHTML = `<p><code>${refactoring.before_local_name}</code> renamed to <code>${refactoring.after_local_name}</code></p>`;
                 break;
             case "MOVE":
                 contentHTML = `<p><code>${refactoring.object_type.toLowerCase()} ${
@@ -165,10 +166,12 @@ function addRefactorings(fileMap, refactoring, side) {
                 contentHTML += `<p>Target: <code>${refactoring.after_file_name}:${refactoring.after_line_number}</code></p>`;
                 break;
             case "EXTRACT_SUPER":
-                title = "EXTRACT " + refactoring.object_type;
-                contentHTML = `<p><code>${refactoring.object_type.toLowerCase()} ${
+                title = "EXTRACT SUPER CLASS";
+                contentHTML = `<p>superclass <code>${refactoring.object_type.toLowerCase()} ${
+                    refactoring.after_local_name
+                }</code> extracted from class <code>${
                     refactoring.before_local_name
-                }</code> extracted to super class.</p>`;
+                }</code>.</p>`;
                 contentHTML += `<p>Source: <code>${refactoring.before_file_name}:${refactoring.before_line_number}</code></p>`;
                 contentHTML += `<p>Target: <code>${refactoring.after_file_name}:${refactoring.after_line_number}</code></p>`;
                 break;
@@ -180,6 +183,8 @@ function addRefactorings(fileMap, refactoring, side) {
                 contentHTML += `<p>Target: <code>${refactoring.after_file_name}:${refactoring.after_line_number}</code></p>`;
                 break;
             default:
+                refactoring.type = refactoring.type.replace("_", " ");
+                title = `${refactoring.type} ${refactoring.object_type}`;
                 contentHTML = `<p>${
                     refactoring.type
                 }: ${refactoring.object_type.toLowerCase()} <code>${

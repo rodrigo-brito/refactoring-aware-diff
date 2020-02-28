@@ -164,6 +164,7 @@ chrome.runtime.onMessage.addListener(function (request) {
         return;
       }
 
+      popup.style.setProperty("display", "none");
       currentPage = request.url.split("#diff")[0]; // check if diff files are loaded
 
       if (!updateFileMap()) {
@@ -265,7 +266,7 @@ function addRefactorings(fileMap, refactoring, side) {
 
     switch (refactoring.type) {
       case "RENAME":
-        contentHTML = "<p><code>".concat(refactoring.before_local_name, "</code> to <code>").concat(refactoring.after_local_name, "</code></p>");
+        contentHTML = "<p><code>".concat(refactoring.before_local_name, "</code> renamed to <code>").concat(refactoring.after_local_name, "</code></p>");
         break;
 
       case "MOVE":
@@ -275,8 +276,8 @@ function addRefactorings(fileMap, refactoring, side) {
         break;
 
       case "EXTRACT_SUPER":
-        title = "EXTRACT " + refactoring.object_type;
-        contentHTML = "<p><code>".concat(refactoring.object_type.toLowerCase(), " ").concat(refactoring.before_local_name, "</code> extracted to super class.</p>");
+        title = "EXTRACT SUPER CLASS";
+        contentHTML = "<p>superclass <code>".concat(refactoring.object_type.toLowerCase(), " ").concat(refactoring.after_local_name, "</code> extracted from class <code>").concat(refactoring.before_local_name, "</code>.</p>");
         contentHTML += "<p>Source: <code>".concat(refactoring.before_file_name, ":").concat(refactoring.before_line_number, "</code></p>");
         contentHTML += "<p>Target: <code>".concat(refactoring.after_file_name, ":").concat(refactoring.after_line_number, "</code></p>");
         break;
@@ -288,6 +289,8 @@ function addRefactorings(fileMap, refactoring, side) {
         break;
 
       default:
+        refactoring.type = refactoring.type.replace("_", " ");
+        title = "".concat(refactoring.type, " ").concat(refactoring.object_type);
         contentHTML = "<p>".concat(refactoring.type, ": ").concat(refactoring.object_type.toLowerCase(), " <code>").concat(refactoring.before_local_name, "</code></p>");
         contentHTML += "<p>Source: <code>".concat(refactoring.before_file_name, ":").concat(refactoring.before_line_number, "</code></p>");
         contentHTML += "<p>Target: <code>".concat(refactoring.after_file_name, ":").concat(refactoring.after_line_number, "</code></p>");

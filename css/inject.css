@@ -1,6 +1,7 @@
 .btn-refector {
     background: transparent;
     float: right;
+    margin: 1px;
 }
 
 .blob-code-deletion .btn-refector {

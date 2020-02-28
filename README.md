@@ -14,7 +14,7 @@ Adds refactoring annotations to GitHub diffs.
 
 ### Usage
 
-You can settup the Github Actions includinding this step in the pipeline:
+To detect refactorings in your repository, you should set up [Github Actions](https://help.github.com/en/actions/configuring-and-managing-workflows/configuring-a-workflow) with the following configuration.
 
 ```yaml
 steps:
@@ -34,7 +34,7 @@ steps:
 
 ### Demo Project
 
-Example of project with Refactoring Aware Review: https://github.com/rodrigo-brito/refactoring-aware-review-example/pull/1/files
+After install Chrome Plugin, you can a list of refactoring anotations here: https://github.com/rodrigo-brito/refactoring-aware-review/pull/2/commits
 
 ## Preview
 
