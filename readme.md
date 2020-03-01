@@ -6,22 +6,19 @@ This action extract project refactorings with [RefDiff](https://github.com/aserg
 
 ```yaml
 steps:
-  - name: Git Checkout
-    uses: actions/checkout@v2
-    with:
-      fetch-depth: 0
+    - name: Git Checkout
+      uses: actions/checkout@v2
+      with:
+          fetch-depth: 0
 
-  - name: Refactoring Extraction
-    env:
-      LANGUAGE: ${{ github.event.repository.language }}
-      REV_BEFORE: ${{ github.event.pull_request.base.sha }}
-      REV_AFTER: ${{ github.event.pull_request.head.sha }}
-    uses: rodrigo-brito/refdiff-github-action@master
+    - name: Refactoring Extraction
+      id: ref-extract
+      env:
+          LANGUAGE: ${{ github.event.repository.language }}
+          REV_BEFORE: ${{ github.event.pull_request.base.sha }}
+          REV_AFTER: ${{ github.event.pull_request.head.sha }}
+      uses: rodrigo-brito/refactoring-aware-review@action
 ```
-
-### Demo Project
-
-We provided a working project with Refactoring Aware Diff installed: https://github.com/rodrigo-brito/refactoring-aware-review-example
 
 ### Preview
 

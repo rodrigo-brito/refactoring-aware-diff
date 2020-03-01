@@ -2,7 +2,7 @@ FROM rtfpessoa/ubuntu-jdk8
 
 WORKDIR /refdiff
 
-ADD refdiff_lib/ refdiff_lib/
-ADD refdiff.jar .
+ADD dist/refdiff_lib/ refdiff_lib/
+ADD dist/refdiff.jar .
 
 CMD java -cp "/refdiff/refdiff_lib/*" -jar /refdiff/refdiff.jar
