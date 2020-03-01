@@ -48,7 +48,7 @@ chrome.runtime.onMessage.addListener(function(request) {
 
             // check if diff files are loaded
             if (!updateFileMap()) {
-                delayToUpdate = 1000; // 1 sec.
+                delayToUpdate = 2000; // 1 sec.
             }
 
             setTimeout(() => {
@@ -166,8 +166,8 @@ function addRefactorings(fileMap, refactoring, side) {
                 contentHTML += `<p>Target: <code>${refactoring.after_file_name}:${refactoring.after_line_number}</code></p>`;
                 break;
             case "EXTRACT_SUPER":
-                title = "EXTRACT SUPER CLASS";
-                contentHTML = `<p>superclass <code>${refactoring.object_type.toLowerCase()} ${
+                title = "EXTRACT " + refactoring.object_type.toUpperCase();
+                contentHTML = `<p>${refactoring.object_type.toLowerCase()} <code> ${
                     refactoring.after_local_name
                 }</code> extracted from class <code>${
                     refactoring.before_local_name
@@ -176,9 +176,11 @@ function addRefactorings(fileMap, refactoring, side) {
                 contentHTML += `<p>Target: <code>${refactoring.after_file_name}:${refactoring.after_line_number}</code></p>`;
                 break;
             case "EXTRACT":
-                contentHTML = `<p><code>${refactoring.object_type.toLowerCase()} ${
+                contentHTML = `<p>${refactoring.object_type.toLowerCase()} <code>${
+                    refactoring.after_local_name
+                }</code> extracted from <code>${refactoring.object_type.toLowerCase()} ${
                     refactoring.before_local_name
-                }</code> extracted.</p>`;
+                }</code>.</p>`;
                 contentHTML += `<p>Source: <code>${refactoring.before_file_name}:${refactoring.before_line_number}</code></p>`;
                 contentHTML += `<p>Target: <code>${refactoring.after_file_name}:${refactoring.after_line_number}</code></p>`;
                 break;

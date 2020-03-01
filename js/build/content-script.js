@@ -168,7 +168,7 @@ chrome.runtime.onMessage.addListener(function (request) {
       currentPage = request.url.split("#diff")[0]; // check if diff files are loaded
 
       if (!updateFileMap()) {
-        delayToUpdate = 1000; // 1 sec.
+        delayToUpdate = 2000; // 1 sec.
       }
 
       setTimeout(function () {
@@ -276,14 +276,14 @@ function addRefactorings(fileMap, refactoring, side) {
         break;
 
       case "EXTRACT_SUPER":
-        title = "EXTRACT SUPER CLASS";
-        contentHTML = "<p>superclass <code>".concat(refactoring.object_type.toLowerCase(), " ").concat(refactoring.after_local_name, "</code> extracted from class <code>").concat(refactoring.before_local_name, "</code>.</p>");
+        title = "EXTRACT " + refactoring.object_type.toUpperCase();
+        contentHTML = "<p>".concat(refactoring.object_type.toLowerCase(), " <code> ").concat(refactoring.after_local_name, "</code> extracted from class <code>").concat(refactoring.before_local_name, "</code>.</p>");
         contentHTML += "<p>Source: <code>".concat(refactoring.before_file_name, ":").concat(refactoring.before_line_number, "</code></p>");
         contentHTML += "<p>Target: <code>".concat(refactoring.after_file_name, ":").concat(refactoring.after_line_number, "</code></p>");
         break;
 
       case "EXTRACT":
-        contentHTML = "<p><code>".concat(refactoring.object_type.toLowerCase(), " ").concat(refactoring.before_local_name, "</code> extracted.</p>");
+        contentHTML = "<p>".concat(refactoring.object_type.toLowerCase(), " <code>").concat(refactoring.after_local_name, "</code> extracted from <code>").concat(refactoring.object_type.toLowerCase(), " ").concat(refactoring.before_local_name, "</code>.</p>");
         contentHTML += "<p>Source: <code>".concat(refactoring.before_file_name, ":").concat(refactoring.before_line_number, "</code></p>");
         contentHTML += "<p>Target: <code>".concat(refactoring.after_file_name, ":").concat(refactoring.after_line_number, "</code></p>");
         break;
