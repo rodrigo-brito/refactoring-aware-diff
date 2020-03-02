@@ -38,7 +38,7 @@ steps:
 
 ## Example of refactoring-aware diff in Github
 
-You can see some examples of refactorings here, without configure Github Actions: https://github.com/rodrigo-brito/refactoring-aware-review/pull/3/commits
+You can see some examples of refactorings here, without configure Github Actions: https://github.com/rodrigo-brito/refactoring-aware-review/pull/5/commits
 
 ## Preview
 
