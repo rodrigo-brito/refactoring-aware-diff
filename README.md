@@ -6,7 +6,7 @@
 
 Code review is a key practice in modern software development. Currently, this practice is performed using textual diff tools, such as the one provided by GitHub. However, diff results can easily become complex and hard to understand. Refactorings, for example, are not represented at all in diff results. This increases diff understanding because reviewers need to infer themselves that a given group of added and removed lines of code represent, for example, an extract method.
 
-Refactoring-Aware Review is a tool pipeline that seamlessly enriches GitHub diff results with refactoring information. This pipeline has two key components:
+Refactoring-Aware Review is a tool pipeline that seamlessly enriches GitHub diff results with refactoring information. This pipeline has three key components:
 
 -   [RefDiff](https://github.com/aserg-ufmg/RefDiff): a tool to detect refactoring operations in commits. In our architecture, we rely on GitHub actions to automatically execute RefDiff after each Pull Request.
 
@@ -14,9 +14,9 @@ Refactoring-Aware Review is a tool pipeline that seamlessly enriches GitHub diff
 
 -   A [Chrome plug-in](https://chrome.google.com/webstore/detail/refactoring-aware-review/bclbegekihgpelanbbleaceefgmekjdd) that seamlessly annotates diff chunks associated to refactorings. As we described, the goal is to easily communicate to developers the reason behind the added/removed lines of code.
 
-<center>
-<img src="https://user-images.githubusercontent.com/7620947/75836214-e4523f00-5d9f-11ea-9dd4-024dfc885c1c.png" width= "400px" />
-</center>
+<p align="center">
+    <img src="https://user-images.githubusercontent.com/7620947/75836214-e4523f00-5d9f-11ea-9dd4-024dfc885c1c.png" width= "400px" />
+</p>
 
 ## Installation
 
