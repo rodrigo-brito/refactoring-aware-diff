@@ -53,7 +53,7 @@ jobs:
               fetch-depth: 0
         - name: RefDiff
           env:
-            LANGUAGE: ${{ github.event.repository.language }}
+            LANGUAGE: ${{ github.event.repository.language }} # Currently, we only provide support for projects implemented in Java.
             REV_BEFORE: ${{ github.event.pull_request.base.sha }}
             REV_AFTER: ${{ github.event.pull_request.head.sha }}
           uses: rodrigo-brito/refactoring-aware-review@action
