@@ -20,19 +20,24 @@ As presented in this figure, this pipeline has three key components:
 
 -   A [Chrome plug-in](https://chrome.google.com/webstore/detail/refactoring-aware-review/bclbegekihgpelanbbleaceefgmekjdd) that seamlessly annotates diff chunks with refactoring data (see the following snapshot).
 
-![image](https://user-images.githubusercontent.com/7620947/74206000-61ced780-4c58-11ea-8478-46e02bd059e9.png)
+#### Move Method
+![Move Method](https://user-images.githubusercontent.com/7620947/76126244-58c5f180-5fdd-11ea-9212-445c147d31cb.png)
+
+#### Pull Up Method
+![Pull Up Method](https://user-images.githubusercontent.com/7620947/76126249-595e8800-5fdd-11ea-8a1f-c066d44adbb8.png)
+
+#### Rename Method
+![Rename Method](https://user-images.githubusercontent.com/7620947/76126250-59f71e80-5fdd-11ea-8e8a-e3ba73473007.png)
 
 ## Installation
 
-<a href="https://chrome.google.com/webstore/detail/refactoring-aware-diff/bclbegekihgpelanbbleaceefgmekjdd">
-    <img width="300px" src="https://user-images.githubusercontent.com/7620947/75341916-26e1bc00-5874-11ea-9526-463ddf1e7f82.png" />
-</a>
-
 To detect refactorings in your repository, you must first install this [Chrome plug-in](https://chrome.google.com/webstore/detail/refactoring-aware-review/bclbegekihgpelanbbleaceefgmekjdd) and configure RefDiff on [Github Actions](https://help.github.com/en/actions/configuring-and-managing-workflows/configuring-a-workflow).
 
-Basically, you need to create a YAML file in `.github/workflows` folder with RefDiff action. An example of a configured project can be found in the [refactorings](https://github.com/rodrigo-brito/refactoring-aware-review/tree/refactorings) branch.
+<a href="https://chrome.google.com/webstore/detail/refactoring-aware-diff/bclbegekihgpelanbbleaceefgmekjdd">
+    <img width="200px" src="https://user-images.githubusercontent.com/7620947/75341916-26e1bc00-5874-11ea-9526-463ddf1e7f82.png" />
+</a>
 
-Example of workflow file: `.github/workflows/workflow.yml`:
+To execute RefDiff as Github Actions, you need to create a workflow file in `.github/workflows` folder with `.yaml` extension. Example of configuration: `.github/workflows/workflow.yml`:
 
 ```yaml
 on: [pull_request] # Trigger RefDiff after each pull request
@@ -56,6 +61,8 @@ jobs:
 
 ## Simple Example
 
-We created a simple pull request with commits including toy refactorings, to illustrate the usage of our plug-in. See here (but first you need to install our plug in): https://github.com/rodrigo-brito/refactoring-aware-review/pull/5/commits
+We created a simple pull request with commits including toy refactorings, to illustrate the usage of our plug-in. See [here](https://github.com/rodrigo-brito/refactoring-aware-review/pull/5/commits) (but first you need to install our plug in).
 
+## License
 
+Distributed under the MIT License. See `LICENSE` for more information.
