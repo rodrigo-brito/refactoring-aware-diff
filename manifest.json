@@ -31,5 +31,6 @@
         "https://github.com/*",
         "https://api.github.com/*",
         "https://refdiff.brito.com.br/*"
-    ]
+    ],
+    "content_security_policy": "script-src 'self' https://www.google-analytics.com; object-src 'self'"
 }

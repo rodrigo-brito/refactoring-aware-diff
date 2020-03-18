@@ -151,6 +151,23 @@ function updateFileMap() {
   return files.length > 0;
 }
 /**
+ * Register an event in analytics
+ * @param {String} category
+ * @param {String} action
+ */
+
+
+function sendEvent(category, action) {
+  console.log("sending event...");
+  chrome.runtime.sendMessage({
+    message: "event",
+    category: category,
+    action: action
+  }, function (res) {
+    console.log("event res = ", res);
+  });
+}
+/**
  * Message receiver to handle data
  */
 
@@ -214,6 +231,7 @@ window.addEventListener("load", function () {
     var top = (window.pageYOffset || element.scrollTop) + bounds.top;
     popup.style.setProperty("top", top + "px");
     popup.style.setProperty("left", left - offset + "px");
+    sendEvent("open", type);
   };
 
   document.body.appendChild(popup);

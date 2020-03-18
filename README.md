@@ -21,12 +21,15 @@ As presented in this figure, this pipeline has three key components:
 -   A [Chrome plug-in](https://chrome.google.com/webstore/detail/refactoring-aware-review/bclbegekihgpelanbbleaceefgmekjdd) that seamlessly annotates diff chunks with refactoring data (see the following snapshot).
 
 #### Move Method
+
 ![Move Method](https://user-images.githubusercontent.com/7620947/76126244-58c5f180-5fdd-11ea-9212-445c147d31cb.png)
 
 #### Pull Up Method
+
 ![Pull Up Method](https://user-images.githubusercontent.com/7620947/76126249-595e8800-5fdd-11ea-8a1f-c066d44adbb8.png)
 
 #### Rename Method
+
 ![Rename Method](https://user-images.githubusercontent.com/7620947/76126250-59f71e80-5fdd-11ea-8e8a-e3ba73473007.png)
 
 ## Installation
@@ -43,20 +46,21 @@ To execute RefDiff as Github Actions, you need to create a workflow file in `.gi
 on: [pull_request] # Trigger RefDiff after each pull request
 
 jobs:
-  main:
-    runs-on: ubuntu-latest
-    name: Refactoring Detection
-      steps:
-        - name: Git Checkout
-          uses: actions/checkout@v2
-          with:
-              fetch-depth: 0
-        - name: RefDiff
-          env:
-            LANGUAGE: ${{ github.event.repository.language }} # Currently, we only provide support for projects implemented in Java.
-            REV_BEFORE: ${{ github.event.pull_request.base.sha }}
-            REV_AFTER: ${{ github.event.pull_request.head.sha }}
-          uses: rodrigo-brito/refactoring-aware-review@action
+    main:
+        runs-on: ubuntu-latest
+        name: Refactoring Detection
+        steps:
+            - name: Git Checkout
+              uses: actions/checkout@v2
+              with:
+                  fetch-depth: 0
+
+            - name: RefDiff
+              env:
+                  LANGUAGE: ${{ github.event.repository.language }} # Currently, we only provide support for projects implemented in Java.
+                  REV_BEFORE: ${{ github.event.pull_request.base.sha }}
+                  REV_AFTER: ${{ github.event.pull_request.head.sha }}
+              uses: rodrigo-brito/refactoring-aware-review@action
 ```
 
 ## Simple Example

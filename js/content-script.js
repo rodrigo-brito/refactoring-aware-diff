@@ -33,6 +33,19 @@ function updateFileMap() {
 }
 
 /**
+ * Register an event in analytics
+ * @param {String} category
+ * @param {String} action
+ */
+function sendEvent(category, action) {
+    chrome.runtime.sendMessage({
+        message: "event",
+        category: category,
+        action: action
+    });
+}
+
+/**
  * Message receiver to handle data
  */
 chrome.runtime.onMessage.addListener(function(request) {
@@ -101,6 +114,8 @@ window.addEventListener("load", function() {
 
         popup.style.setProperty("top", top + "px");
         popup.style.setProperty("left", left - offset + "px");
+
+        sendEvent("open", type);
     };
 
     document.body.appendChild(popup);
