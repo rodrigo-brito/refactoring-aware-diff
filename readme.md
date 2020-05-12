@@ -11,7 +11,14 @@ go build -o server cmd/server/main.go
 ./server
 ```
 
+## Image Build
+
+```bash
+docker build -t rodrigobrito/refdiff:server .
+docker push rodrigobrito/refdiff:server
+```
+
 ## Endpoints
 
-- `POST /user/repo/id` - Save refactorings for a given PR
-- `GET /user/repo/id` - Get refactorings found in a given PR
+- `POST /new` - Save refactorings for a given PR / Commit
+- `GET /get/{id}` - Get refactorings found in a given PR / Commit
