@@ -2,11 +2,8 @@ package action
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
-	"refdiff/pkg/model"
 	"refdiff/pkg/service"
-	"strconv"
 
 	"github.com/go-chi/chi"
 	log "github.com/sirupsen/logrus"
@@ -23,24 +20,15 @@ func NewHandler(service service.Refactoring) *Handler {
 }
 
 func (h *Handler) Save(w http.ResponseWriter, r *http.Request) {
-	user := chi.URLParam(r, "user")
-	project := chi.URLParam(r, "project")
-	pr := chi.URLParam(r, "pr")
-	prNumber, err := strconv.Atoi(pr)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	var refactorings model.RefactoringCollection
-	err = json.NewDecoder(r.Body).Decode(&refactorings)
+	var payload service.Payload
+	err := json.NewDecoder(r.Body).Decode(&payload)
 	if err != nil {
 		log.Error(err)
 		w.WriteHeader(http.StatusServiceUnavailable)
 		return
 	}
 
-	err = h.service.Save(r.Context(), fmt.Sprintf("%s/%s", user, project), prNumber, refactorings)
+	err = h.service.Save(r.Context(), payload)
 	if err != nil {
 		log.Error(err)
 		w.WriteHeader(http.StatusServiceUnavailable)
@@ -49,16 +37,8 @@ func (h *Handler) Save(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
-	user := chi.URLParam(r, "user")
-	project := chi.URLParam(r, "project")
-	pr := chi.URLParam(r, "pr")
-	prNumber, err := strconv.Atoi(pr)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	refactorings, err := h.service.FetchByPullRequest(r.Context(), fmt.Sprintf("%s/%s", user, project), prNumber)
+	id := chi.URLParam(r, "id")
+	refactorings, err := h.service.Fetch(r.Context(), id)
 	if err != nil {
 		log.Error(err)
 		w.WriteHeader(http.StatusServiceUnavailable)

@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"fmt"
 	"refdiff/pkg/model"
 	"time"
 
@@ -10,11 +9,17 @@ import (
 	firebase "firebase.google.com/go"
 )
 
-const collectionName = "refactoring"
-
 type Refactoring interface {
-	FetchByPullRequest(ctx context.Context, project string, ID int) (*model.Job, error)
-	Save(ctx context.Context, project string, pr int, refactorings []*model.Refactoring) error
+	Fetch(ctx context.Context, id string) (*model.Job, error)
+	Save(ctx context.Context, payload Payload) error
+}
+
+type Payload struct {
+	ID            string                      `json:"id"`
+	PullRequest   int                         `json:"pr"`
+	CreatedAt     time.Time                   `json:"created_at"`
+	ExecutionTime int                         `json:"execution_time"`
+	Refactorings  model.RefactoringCollection `json:"refactorings"`
 }
 
 type refactoring struct {
@@ -32,8 +37,8 @@ func NewRefactoring(ctx context.Context, app *firebase.App) (Refactoring, error)
 	}, nil
 }
 
-func (r *refactoring) FetchByPullRequest(ctx context.Context, project string, pr int) (*model.Job, error) {
-	doc, err := r.firestore.Collection(collectionName).Doc(getDocID(project, pr)).Get(ctx)
+func (r *refactoring) Fetch(ctx context.Context, id string) (*model.Job, error) {
+	doc, err := r.firestore.Doc(id).Get(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -47,15 +52,12 @@ func (r *refactoring) FetchByPullRequest(ctx context.Context, project string, pr
 	return nil, nil
 }
 
-func getDocID(project string, ID int) string {
-	return fmt.Sprintf("%s/%d", project, ID)
-}
-
-func (r *refactoring) Save(ctx context.Context, project string, pr int, refactorings []*model.Refactoring) error {
-	_, err := r.firestore.Collection(collectionName).Doc(getDocID(project, pr)).Set(ctx, &model.Job{
-		PR:           pr,
-		CreatedAt:    time.Now(),
-		Refactorings: refactorings,
+func (r *refactoring) Save(ctx context.Context, payload Payload) error {
+	_, err := r.firestore.Doc(payload.ID).Set(ctx, &model.Job{
+		PR:            payload.PullRequest,
+		CreatedAt:     time.Now(),
+		Refactorings:  payload.Refactorings,
+		ExecutionTime: payload.ExecutionTime,
 	})
 	return err
 }

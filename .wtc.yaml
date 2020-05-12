@@ -1,0 +1,13 @@
+no_trace: false
+debounce: 300
+ignore: \.git/
+trig: [run]
+rules:
+  - name: start
+    match: \.go$
+    ignore: _test\.go$
+    command: go run cmd/server/main.go
+
+  - name: test
+    match: _test\.go$
+    command: go test -cover {PKG}

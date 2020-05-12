@@ -2,14 +2,14 @@ package main
 
 import (
 	"net/http"
+
 	"refdiff/pkg/action"
 	"refdiff/pkg/service"
-
-	"github.com/go-chi/cors"
 
 	firebase "firebase.google.com/go"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/cors"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
 	"google.golang.org/api/option"
@@ -40,8 +40,8 @@ func main() {
 	router := chi.NewRouter()
 	router.Use(cors.Handler)
 	router.Use(middleware.DefaultLogger)
-	router.Get("/{user}/{project}/{pr}", handler.Get)
-	router.Post("/{user}/{project}/{pr}", handler.Save)
+	router.Get("/get/{id}", handler.Get)
+	router.Post("/new", handler.Save)
 
 	log.Info("Listen at localhost:8080")
 	err = http.ListenAndServe(":8080", router)
