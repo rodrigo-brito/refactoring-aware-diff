@@ -57,7 +57,7 @@ jobs:
 
             - name: RefDiff
               env:
-                  LANGUAGE: ${{ github.event.repository.language }} # Currently, we only provide support for projects implemented in Java.
+                  LANGUAGE: ${{ github.event.repository.language }} # Supports Java, Javascrit, C and Go.
                   REV_BEFORE: ${{ github.event.pull_request.base.sha }}
                   REV_AFTER: ${{ github.event.pull_request.head.sha }}
               uses: rodrigo-brito/refactoring-aware-review@action
