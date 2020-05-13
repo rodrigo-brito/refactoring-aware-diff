@@ -2,6 +2,13 @@
     background: transparent;
     float: right;
     margin: 1px;
+
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 
 .blob-code-deletion .btn-refector {

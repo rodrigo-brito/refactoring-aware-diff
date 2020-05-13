@@ -158,13 +158,10 @@ function updateFileMap() {
 
 
 function sendEvent(category, action) {
-  console.log("sending event...");
   chrome.runtime.sendMessage({
-    message: "event",
+    command: "event",
     category: category,
     action: action
-  }, function (res) {
-    console.log("event res = ", res);
   });
 }
 /**
@@ -175,8 +172,8 @@ function sendEvent(category, action) {
 chrome.runtime.onMessage.addListener(function (request) {
   var delayToUpdate = 0;
 
-  switch (request.message) {
-    case "data":
+  switch (request.command) {
+    case "fetch":
       if (urlEqual(request.url, currentPage)) {
         return;
       }
@@ -240,7 +237,7 @@ window.addEventListener("load", function () {
   }); // Request background task refactorings
 
   chrome.runtime.sendMessage({
-    message: "fetch",
+    command: "fetch",
     url: document.location.href.split("#diff")[0]
   });
 });
@@ -288,6 +285,7 @@ function addRefactorings(fileMap, refactoring, side) {
         break;
 
       case "MOVE":
+      case "INTERNAL_MOVE":
         contentHTML = "<p><code>".concat(refactoring.object_type.toLowerCase(), " ").concat(refactoring.before_local_name, "</code> moved.</p>");
         contentHTML += "<p>Source: <code>".concat(refactoring.before_file_name, ":").concat(refactoring.before_line_number, "</code></p>");
         contentHTML += "<p>Target: <code>".concat(refactoring.after_file_name, ":").concat(refactoring.after_line_number, "</code></p>");
@@ -301,7 +299,14 @@ function addRefactorings(fileMap, refactoring, side) {
         break;
 
       case "EXTRACT":
+      case "EXTRACT_MOVE":
         contentHTML = "<p>".concat(refactoring.object_type.toLowerCase(), " <code>").concat(refactoring.after_local_name, "</code> extracted from <code>").concat(refactoring.object_type.toLowerCase(), " ").concat(refactoring.before_local_name, "</code>.</p>");
+        contentHTML += "<p>Source: <code>".concat(refactoring.before_file_name, ":").concat(refactoring.before_line_number, "</code></p>");
+        contentHTML += "<p>Target: <code>".concat(refactoring.after_file_name, ":").concat(refactoring.after_line_number, "</code></p>");
+        break;
+
+      case "INLINE":
+        contentHTML = "<p>Inline <code>".concat(refactoring.object_type.toLowerCase(), " ").concat(refactoring.before_local_name, "</code> in <code> ").concat(refactoring.after_local_name, "</code>.</p>");
         contentHTML += "<p>Source: <code>".concat(refactoring.before_file_name, ":").concat(refactoring.before_line_number, "</code></p>");
         contentHTML += "<p>Target: <code>".concat(refactoring.after_file_name, ":").concat(refactoring.after_line_number, "</code></p>");
         break;

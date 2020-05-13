@@ -1,6 +1,6 @@
 {
     "name": "Refactoring-aware review",
-    "version": "0.0.3",
+    "version": "0.0.4",
     "manifest_version": 2,
     "description": "Adds refactoring annotations to GitHub diff",
     "homepage_url": "https://github.com/rodrigo-brito/refactoring-diff",
@@ -13,15 +13,23 @@
         "default_icon": "icons/icon128.png"
     },
     "background": {
-        "scripts": ["js/build/background.js"],
+        "scripts": [
+            "js/build/background.js"
+        ],
         "persistent": false
     },
     "content_scripts": [
         {
             "run_at": "document_end",
-            "matches": ["https://github.com/*"],
-            "css": ["css/inject.css"],
-            "js": ["js/build/content-script.js"]
+            "matches": [
+                "https://github.com/*"
+            ],
+            "css": [
+                "css/inject.css"
+            ],
+            "js": [
+                "js/build/content-script.js"
+            ]
         }
     ],
     "permissions": [
@@ -32,5 +40,5 @@
         "https://api.github.com/*",
         "https://refdiff.brito.com.br/*"
     ],
-    "content_security_policy": "script-src 'self' https://www.google-analytics.com; object-src 'self'"
+    "content_security_policy": "script-src 'self' https://www.gstatic.com https://*.firebaseio.com https://*.firebaseapp.com https://*.googleapis.com https://www.google-analytics.com; object-src 'self'"
 }

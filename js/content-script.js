@@ -39,7 +39,7 @@ function updateFileMap() {
  */
 function sendEvent(category, action) {
     chrome.runtime.sendMessage({
-        message: "event",
+        command: "event",
         category: category,
         action: action
     });
@@ -48,10 +48,10 @@ function sendEvent(category, action) {
 /**
  * Message receiver to handle data
  */
-chrome.runtime.onMessage.addListener(function(request) {
+chrome.runtime.onMessage.addListener(function (request) {
     let delayToUpdate = 0;
-    switch (request.message) {
-        case "data":
+    switch (request.command) {
+        case "fetch":
             if (urlEqual(request.url, currentPage)) {
                 return;
             }
@@ -85,7 +85,7 @@ chrome.runtime.onMessage.addListener(function(request) {
 /**
  * Plugin initialization after page load
  */
-window.addEventListener("load", function() {
+window.addEventListener("load", function () {
     popup.setAttribute("class", "diff-refector-popup");
     popup.innerHTML = `
         <button class="diff-refector-popup-close btn btn-sm btn-default">x</button>
@@ -94,7 +94,7 @@ window.addEventListener("load", function() {
         <a class="btn btn-sm btn-primary refactor-link" href="#">Go to source</a>
     `;
 
-    popup.show = function(element, type, diffHTML, link, buttonText) {
+    popup.show = function (element, type, diffHTML, link, buttonText) {
         popup.style.setProperty("display", "block");
         popup.querySelector(".refactor-content").innerHTML = diffHTML;
         popup.querySelector(".refactor-type").innerText = type;
@@ -121,13 +121,13 @@ window.addEventListener("load", function() {
     document.body.appendChild(popup);
     document
         .querySelector(".diff-refector-popup-close")
-        .addEventListener("click", function() {
+        .addEventListener("click", function () {
             popup.style.setProperty("display", "none");
         });
 
     // Request background task refactorings
     chrome.runtime.sendMessage({
-        message: "fetch",
+        command: "fetch",
         url: document.location.href.split("#diff")[0]
     });
 });
@@ -174,9 +174,10 @@ function addRefactorings(fileMap, refactoring, side) {
                 contentHTML = `<p><code>${refactoring.before_local_name}</code> renamed to <code>${refactoring.after_local_name}</code></p>`;
                 break;
             case "MOVE":
+            case "INTERNAL_MOVE":
                 contentHTML = `<p><code>${refactoring.object_type.toLowerCase()} ${
                     refactoring.before_local_name
-                }</code> moved.</p>`;
+                    }</code> moved.</p>`;
                 contentHTML += `<p>Source: <code>${refactoring.before_file_name}:${refactoring.before_line_number}</code></p>`;
                 contentHTML += `<p>Target: <code>${refactoring.after_file_name}:${refactoring.after_line_number}</code></p>`;
                 break;
@@ -184,18 +185,28 @@ function addRefactorings(fileMap, refactoring, side) {
                 title = "EXTRACT " + refactoring.object_type.toUpperCase();
                 contentHTML = `<p>${refactoring.object_type.toLowerCase()} <code> ${
                     refactoring.after_local_name
-                }</code> extracted from class <code>${
+                    }</code> extracted from class <code>${
                     refactoring.before_local_name
-                }</code>.</p>`;
+                    }</code>.</p>`;
                 contentHTML += `<p>Source: <code>${refactoring.before_file_name}:${refactoring.before_line_number}</code></p>`;
                 contentHTML += `<p>Target: <code>${refactoring.after_file_name}:${refactoring.after_line_number}</code></p>`;
                 break;
             case "EXTRACT":
+            case "EXTRACT_MOVE":
                 contentHTML = `<p>${refactoring.object_type.toLowerCase()} <code>${
                     refactoring.after_local_name
-                }</code> extracted from <code>${refactoring.object_type.toLowerCase()} ${
+                    }</code> extracted from <code>${refactoring.object_type.toLowerCase()} ${
                     refactoring.before_local_name
-                }</code>.</p>`;
+                    }</code>.</p>`;
+                contentHTML += `<p>Source: <code>${refactoring.before_file_name}:${refactoring.before_line_number}</code></p>`;
+                contentHTML += `<p>Target: <code>${refactoring.after_file_name}:${refactoring.after_line_number}</code></p>`;
+                break;
+            case "INLINE":
+                contentHTML = `<p>Inline <code>${refactoring.object_type.toLowerCase()} ${
+                    refactoring.before_local_name
+                    }</code> in <code> ${
+                    refactoring.after_local_name
+                    }</code>.</p>`;
                 contentHTML += `<p>Source: <code>${refactoring.before_file_name}:${refactoring.before_line_number}</code></p>`;
                 contentHTML += `<p>Target: <code>${refactoring.after_file_name}:${refactoring.after_line_number}</code></p>`;
                 break;
@@ -204,9 +215,9 @@ function addRefactorings(fileMap, refactoring, side) {
                 title = `${refactoring.type} ${refactoring.object_type}`;
                 contentHTML = `<p>${
                     refactoring.type
-                }: ${refactoring.object_type.toLowerCase()} <code>${
+                    }: ${refactoring.object_type.toLowerCase()} <code>${
                     refactoring.before_local_name
-                }</code></p>`;
+                    }</code></p>`;
                 contentHTML += `<p>Source: <code>${refactoring.before_file_name}:${refactoring.before_line_number}</code></p>`;
                 contentHTML += `<p>Target: <code>${refactoring.after_file_name}:${refactoring.after_line_number}</code></p>`;
         }
