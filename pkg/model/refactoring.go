@@ -22,6 +22,7 @@ type Refactoring struct {
 	AfterBegin       int    `firestore:"after_begin" json:"after_begin"`
 	AfterEnd         int    `firestore:"after_end" json:"after_end"`
 	AfterLineNumber  int    `firestore:"after_line_number" json:"after_line_number"`
+	Diff             string `firestore:"diff" json:"diff"`
 }
 
 type RefactoringCollection []*Refactoring
