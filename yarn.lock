@@ -743,9 +743,9 @@
   version "1.10.1"
   resolved "https://registry.yarnpkg.com/@firebase/firestore-types/-/firestore-types-1.10.1.tgz#bf018f9c495f470592de745389474dc1c2960d3f"
 
-"@firebase/firestore@1.14.3":
-  version "1.14.3"
-  resolved "https://registry.yarnpkg.com/@firebase/firestore/-/firestore-1.14.3.tgz#675e0c26db056eee140e06bb17ecc91f21cc4390"
+"@firebase/firestore@1.14.4":
+  version "1.14.4"
+  resolved "https://registry.yarnpkg.com/@firebase/firestore/-/firestore-1.14.4.tgz#091aa990dbd8bf1e90fdd29f21098f1ef80fddbd"
   dependencies:
     "@firebase/component" "0.1.11"
     "@firebase/firestore-types" "1.10.1"
@@ -2394,16 +2394,16 @@ find-up@^3.0.0:
   dependencies:
     locate-path "^3.0.0"
 
-firebase@^7.14.3:
-  version "7.14.3"
-  resolved "https://registry.yarnpkg.com/firebase/-/firebase-7.14.3.tgz#dfe6fa3e5982a6d6d6d44bfc50dba23568a5a777"
+firebase@^7.14.4:
+  version "7.14.4"
+  resolved "https://registry.yarnpkg.com/firebase/-/firebase-7.14.4.tgz#c9256bc32e51ebcb93ef7542ef4ed6cc153c6f50"
   dependencies:
     "@firebase/analytics" "0.3.4"
     "@firebase/app" "0.6.3"
     "@firebase/app-types" "0.6.0"
     "@firebase/auth" "0.14.5"
     "@firebase/database" "0.6.2"
-    "@firebase/firestore" "1.14.3"
+    "@firebase/firestore" "1.14.4"
     "@firebase/functions" "0.4.43"
     "@firebase/installations" "0.4.9"
     "@firebase/messaging" "0.6.15"
