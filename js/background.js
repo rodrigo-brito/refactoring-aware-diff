@@ -1,117 +1,151 @@
-// Firebase App (the core Firebase SDK) is always required and must be listed first
 import firebase from "firebase/app";
 import "firebase/firestore";
+import "firebase/auth";
+import initAnalytics from "./analytics";
 
+// Init Google Analytics
+initAnalytics();
+
+/**
+ * Google Analytics
+ */
 const firebaseConfig = {
     apiKey: "AIzaSyDIBgAmAXNdSZ_2jHMs9OxylexHitBnXIU",
     authDomain: "refdiff.firebaseapp.com",
     projectId: "refdiff",
 };
 
-// Initialize Firebase
 firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-
-
-// Standard Google Universal Analytics code
-(function (i, s, o, g, r, a, m) {
-    i["GoogleAnalyticsObject"] = r;
-    (i[r] =
-        i[r] ||
-        function () {
-            (i[r].q = i[r].q || []).push(arguments);
-        }),
-        (i[r].l = 1 * new Date());
-    (a = s.createElement(o)), (m = s.getElementsByTagName(o)[0]);
-    a.async = 1;
-    a.src = g;
-    m.parentNode.insertBefore(a, m);
-})(
-    window,
-    document,
-    "script",
-    "https://www.google-analytics.com/analytics.js",
-    "ga"
-);
-
-ga("create", "UA-35546390-8", "auto");
-ga("set", "checkProtocolTask", function () { }); // Removes failing protocol check. @see: http://stackoverflow.com/a/22152353/1958200
-ga("require", "displayfeatures");
-ga("send", "pageview", "/");
-
-chrome.tabs.onUpdated.addListener(function (tabId, changeInfo) {
-    if (!changeInfo.url) {
-        return;
+firebase.auth().onAuthStateChanged(function (user) {
+    if (user) {
+        ga("send", "event", "login");
+    } else {
+        ga("send", "event", "logoff");
     }
-
-    fetchData(changeInfo.url, function (data) {
-        chrome.tabs.sendMessage(tabId, {
-            url: changeInfo.url,
-            message: "data",
-            data
-        });
-    });
 });
 
+const db = firebase.firestore();
+chrome.windows.onCreated.addListener(function () {
+    firebase.auth().currentUser;
+});
 
-function sendMessage(data) {
-    chrome.tabs.query(
-        { active: true, currentWindow: true },
-        function (tabs) {
-            chrome.tabs.sendMessage(tabs[0].id, data);
-        }
-    );
-}
+chrome.runtime.onMessage.addListener(function (message, _, sendResponse) {
+    switch (message.type) {
+        case "refdiff-login-status":
+            var user = firebase.auth().currentUser;
+            if (user) {
+                sendResponse({ type: "loggedIn", user: user });
+            } else {
+                sendResponse({ type: "loggedOut" });
+            }
+            break;
+        case "refdiff-login":
+            var provider = new firebase.auth.GithubAuthProvider();
+            provider.addScope("user");
 
-const regex = /github\.com\/([\w_-]+)\/([\w_-]+)\/pull\/(\d+)/g;
-chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+            var auth = firebase.auth();
+            auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+            auth.signInWithPopup(provider)
+                .then(function (response) {
+                    sendResponse({ type: "loggedIn", user: response.user });
+                })
+                .catch(function (error) {
+                    console.error(error);
+                });
+            break;
+        case "refdiff-logout":
+            firebase
+                .auth()
+                .signOut()
+                .then(function () {
+                    sendResponse({ type: "loggedOut" });
+                })
+                .catch(function (error) {
+                    console.error(error);
+                });
+            break;
+        case "refdiff-refresh":
+            // TODO: make a refresh in data
+            setTimeout(() => {
+                sendResponse({});
+            }, 1000);
+            break;
+    }
+    return true;
+});
+
+const sendMessage = (data) => {
+    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+        chrome.tabs.sendMessage(tabs[0].id, data);
+        return true;
+    });
+};
+
+const regexCommit = new RegExp(
+    /github\.com\/([\w_-]+)\/([\w_-]+)\/(?:pull\/\d+\/)?commits?\/(\w+)/
+);
+const regexPullRequest = new RegExp(
+    /github\.com\/([\w_-]+)\/([\w_-]+)\/pull\/(\d+)/
+);
+const getDocIDFromURL = (url) => {
+    let urlParts = regexCommit.exec(url);
+    if (urlParts) {
+        return `${urlParts[1]}/${urlParts[2]}/commit/${urlParts[3]}`;
+    }
+
+    urlParts = regexPullRequest.exec(url);
+    if (urlParts) {
+        return `${urlParts[1]}/${urlParts[2]}/pull/${urlParts[3]}`;
+    }
+
+    return false;
+};
+
+chrome.runtime.onMessage.addListener(function (request, _, sendResponse) {
     switch (request.command) {
-        case "fetch":
-            var urlParts = regex.exec(request.url);
-
-            if (!urlParts) {
+        case "refdiff-refactoring":
+            var docID = getDocIDFromURL(request.url);
+            if (!docID) {
+                sendResponse({});
                 return;
             }
 
-            db.doc(`${urlParts[1]}/${urlParts[2]}/pull/${urlParts[3]}`).get()
+            db.doc(docID)
+                .get()
                 .then((querySnapshot) => {
                     return querySnapshot.data();
-                }).then(data => {
+                })
+                .then((data) => {
+                    if (data) {
+                        // register view in diff refactoring
+                        ga("send", "pageview", "/" + docID);
+                    }
+
                     sendMessage({
                         command: request.command,
                         data: data,
-                        url: request.url
+                        url: request.url,
                     });
-                }).catch(err => {
+                    sendResponse(data);
+                })
+                .catch((err) => {
+                    console.error(err);
                     sendMessage({
                         command: request.command,
                         err: err || "firebase: error in fetch refatorings",
-                        url: request.url
+                        url: request.url,
                     });
+                    sendResponse({});
                 });
             break;
         case "event":
-            ga("send", "event", request.category, request.action);
+            ga(
+                "send",
+                "event",
+                request.category,
+                request.action,
+                request.value
+            );
     }
+    return true;
 });
-
-function fetchData(url, callback) {
-    const regex = /github\.com\/([\w_-]+)\/([\w_-]+)\/pull\/(\d+)/g;
-    var urlParts = regex.exec(url);
-
-    if (!urlParts) {
-        return;
-    }
-
-    fetch(
-        `https://refdiff.brito.com.br/${urlParts[1]}/${urlParts[2]}/${
-        urlParts[3]
-        }?t = ${+new Date()} ` // TODO remove seed
-    )
-        .then(function (response) {
-            return response.json();
-        })
-        .then(function (data) {
-            callback(data);
-        });
-}

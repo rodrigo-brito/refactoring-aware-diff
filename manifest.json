@@ -1,6 +1,6 @@
 {
     "name": "Refactoring-aware review",
-    "version": "0.0.4",
+    "version": "0.0.5",
     "manifest_version": 2,
     "description": "Adds refactoring annotations to GitHub diff",
     "homepage_url": "https://github.com/rodrigo-brito/refactoring-diff",
@@ -10,26 +10,20 @@
         "128": "icons/icon128.png"
     },
     "browser_action": {
-        "default_icon": "icons/icon128.png"
+        "default_icon": "icons/icon128.png",
+        "default_title": "Refactoring Aware Diff",
+        "default_popup": "html/browser_action.html"
     },
     "background": {
-        "scripts": [
-            "js/build/background.js"
-        ],
+        "scripts": ["js/build/background.js"],
         "persistent": false
     },
     "content_scripts": [
         {
             "run_at": "document_end",
-            "matches": [
-                "https://github.com/*"
-            ],
-            "css": [
-                "css/inject.css"
-            ],
-            "js": [
-                "js/build/content-script.js"
-            ]
+            "matches": ["https://github.com/*"],
+            "css": ["css/inject.css", "css/diff2html.min.css"],
+            "js": ["js/build/content-script.js"]
         }
     ],
     "permissions": [
@@ -40,5 +34,5 @@
         "https://api.github.com/*",
         "https://refdiff.brito.com.br/*"
     ],
-    "content_security_policy": "script-src 'self' https://www.gstatic.com https://*.firebaseio.com https://*.firebaseapp.com https://*.googleapis.com https://www.google-analytics.com; object-src 'self'"
+    "content_security_policy": "script-src 'self' https://apis.google.com https://www.gstatic.com https://*.firebaseio.com https://*.firebaseapp.com https://*.googleapis.com https://www.google-analytics.com; object-src 'self'"
 }

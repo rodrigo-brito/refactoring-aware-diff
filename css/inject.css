@@ -1,7 +1,7 @@
 .btn-refector {
     background: transparent;
     float: right;
-    margin: 1px;
+    border: 0;
 
     -webkit-touch-callout: none;
     -webkit-user-select: none;
@@ -12,13 +12,17 @@
 }
 
 .blob-code-deletion .btn-refector {
-    border: 1px solid #cb2431;
     color: #cb2431;
+    -webkit-box-shadow: inset 0px 0px 0px 1px #cb2431;
+    -moz-box-shadow: inset 0px 0px 0px 1px #cb2431;
+    box-shadow: inset 0px 0px 0px 1px #cb2431;
 }
 
 .blob-code-addition .btn-refector {
-    border: 1px solid #28a745;
     color: #28a745;
+    -webkit-box-shadow: inset 0px 0px 0px 1px #28a745;
+    -moz-box-shadow: inset 0px 0px 0px 1px #28a745;
+    box-shadow: inset 0px 0px 0px 1px #28a745;
 }
 
 .blob-code-deletion .btn-refector:hover {
@@ -26,7 +30,7 @@
 }
 
 .blob-code-addition .btn-refector:hover {
-    background: #5fa76f;
+    background: #85c794;
 }
 
 .diff-refector-popup {
@@ -36,7 +40,7 @@
     left: 0;
 
     z-index: 7;
-    max-width: 500px;
+    max-width: 50vw;
     background-color: #ffffff;
     padding: 10px;
     border-radius: 5px;

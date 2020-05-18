@@ -1,7 +1,11 @@
 const Bundler = require("parcel-bundler");
 const open = require("open");
 
-const entryFiles = ["./js/content-script.js", "./js/background.js"];
+const entryFiles = [
+    "./js/content-script.js",
+    "./js/background.js",
+    "./js/browser-action.js",
+];
 
 const options = {
     outDir: "js/build/",
@@ -12,10 +16,10 @@ const options = {
     target: "browser",
     hmr: false,
     sourceMaps: false,
-    detailedReport: true
+    detailedReport: true,
 };
 
-(async function() {
+(async function () {
     const bundler = new Bundler(entryFiles, options);
     bundler.on("buildEnd", () => {
         console.log("Refreshing extensions");

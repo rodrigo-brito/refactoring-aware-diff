@@ -1,103 +1,137 @@
+import * as diff2Html from "diff2html";
+
 const LEFT_SIDE = "left";
 const RIGHT_SIDE = "right";
 
 let fileMap = {};
 let popup = document.createElement("div");
-let currentPage = "";
-
-/**
- * Check if Github URLs are equal
- * @param {String} baseURL
- * @param {String} reference
- */
-function urlEqual(baseURL, reference) {
-    return baseURL.split("#diff")[0] === reference.split("#diff")[0];
-}
 
 /**
  * Update global file map after url change
  */
-function updateFileMap() {
+const updateFileMap = () => {
     let files = document.querySelectorAll(".file");
-    files.forEach(file => {
+    files.forEach((file) => {
         let header = file.querySelector(".file-info > a");
         let fileName = header.textContent;
         let link = header.getAttribute("href");
 
         fileMap[fileName] = {
             ref: file,
-            link: link
+
+            link: link,
         };
     });
     return files.length > 0;
-}
+};
 
 /**
  * Register an event in analytics
  * @param {String} category
  * @param {String} action
  */
-function sendEvent(category, action) {
+const sendEvent = (category, action, value) => {
     chrome.runtime.sendMessage({
         command: "event",
         category: category,
-        action: action
+        action: action,
+        value: value,
     });
-}
+};
 
 /**
  * Message receiver to handle data
  */
 chrome.runtime.onMessage.addListener(function (request) {
-    let delayToUpdate = 0;
     switch (request.command) {
-        case "fetch":
-            if (urlEqual(request.url, currentPage)) {
-                return;
-            }
-
+        case "refdiff-refactoring":
             popup.style.setProperty("display", "none");
-            currentPage = request.url.split("#diff")[0];
 
             // check if diff files are loaded
             if (!updateFileMap()) {
-                delayToUpdate = 2000; // 1 sec.
+                return;
             }
 
-            setTimeout(() => {
-                if (delayToUpdate > 0) {
-                    updateFileMap();
-                }
+            // no refactorings found
+            if (!request.data || !request.data.refactorings) {
+                return;
+            }
 
-                // avoid insert duplication with delayed requests
-                if (document.querySelector(".btn-refector")) {
-                    return;
-                }
-
-                request.data.refactorings.forEach(refactoring => {
-                    addRefactorings(fileMap, refactoring, LEFT_SIDE);
-                    addRefactorings(fileMap, refactoring, RIGHT_SIDE);
-                });
-            }, delayToUpdate);
+            console.log(
+                "Loading: " + request.data.refactorings.length + " refactorings"
+            );
+            request.data.refactorings.forEach((refactoring) => {
+                addRefactorings(fileMap, refactoring, LEFT_SIDE);
+                addRefactorings(fileMap, refactoring, RIGHT_SIDE);
+            });
     }
 });
+
+var debounceObserver = null;
+const debounceObserverTimeout = 100;
+
+/**
+ * Initialize observers to trigger plugin update
+ * @param {Array} selectors list of CSS selectors to observe
+ */
+const initObserver = (selectors) => {
+    console.log("observer init!");
+    const observer = new MutationObserver(function (mutationsList) {
+        for (let mutation of mutationsList) {
+            if (mutation.type === "childList") {
+                clearTimeout(debounceObserver);
+                debounceObserver = setTimeout(function () {
+                    console.log("Content changed!");
+
+                    // request data from firebase
+                    chrome.runtime.sendMessage({
+                        command: "refdiff-refactoring",
+                        url: document.location.href.split("#diff")[0],
+                    });
+                }, debounceObserverTimeout);
+            }
+        }
+    });
+
+    selectors.forEach((selector) => {
+        const targetNode = document.querySelector(selector);
+        observer.observe(targetNode, {
+            attributes: false,
+            childList: true,
+            subtree: true,
+        });
+    });
+};
 
 /**
  * Plugin initialization after page load
  */
 window.addEventListener("load", function () {
+    console.log("filed loaded!!");
+    initObserver(["#js-repo-pjax-container"]);
+
     popup.setAttribute("class", "diff-refector-popup");
     popup.innerHTML = `
         <button class="diff-refector-popup-close btn btn-sm btn-default">x</button>
         <p><b class="refactor-type"></b></p>
         <div class="refactor-content"></div>
+        <div class="refactor-diff-box"></div>
         <a class="btn btn-sm btn-primary refactor-link" href="#">Go to source</a>
     `;
 
-    popup.show = function (element, type, diffHTML, link, buttonText) {
+    popup.show = function (
+        element,
+        type,
+        contentHTML,
+        link,
+        buttonText,
+        side,
+        gitDiff
+    ) {
         popup.style.setProperty("display", "block");
-        popup.querySelector(".refactor-content").innerHTML = diffHTML;
+        popup.querySelector(".refactor-content").innerHTML = contentHTML;
         popup.querySelector(".refactor-type").innerText = type;
+        popup.querySelector(".refactor-diff-box").innerHTML = gitDiff || "";
 
         if (link) {
             let button = popup.querySelector(".refactor-link");
@@ -112,24 +146,38 @@ window.addEventListener("load", function () {
         let left = (window.pageXOffset || element.scrollLeft) + bounds.left;
         let top = (window.pageYOffset || element.scrollTop) + bounds.top;
 
+        // check if exists another open modal with unfinished time
+        const lastTime = popup.getAttribute("data-time");
+        if (lastTime) {
+            const duration = (+new Date() - lastTime) / 1000.0;
+            sendEvent("duration-type", type, duration);
+            sendEvent("duration-side", side, duration);
+        }
+
         popup.style.setProperty("top", top + "px");
         popup.style.setProperty("left", left - offset + "px");
+        popup.setAttribute("data-time", +new Date());
+        popup.setAttribute("data-type", type);
+        popup.setAttribute("data-side", side);
 
-        sendEvent("open", type);
+        sendEvent("open-type", type);
+        sendEvent("open-side", side);
     };
 
     document.body.appendChild(popup);
     document
         .querySelector(".diff-refector-popup-close")
         .addEventListener("click", function () {
+            const type = popup.getAttribute("data-type");
+            const side = popup.getAttribute("data-side");
+            const openTime = Number(popup.getAttribute("data-time"));
+            const duration = (+new Date() - openTime) / 1000.0;
+
+            popup.removeAttribute("data-time");
+            sendEvent("duration-type", type, duration);
+            sendEvent("duration-side", side, duration);
             popup.style.setProperty("display", "none");
         });
-
-    // Request background task refactorings
-    chrome.runtime.sendMessage({
-        command: "fetch",
-        url: document.location.href.split("#diff")[0]
-    });
 });
 
 /**
@@ -138,7 +186,18 @@ window.addEventListener("load", function () {
  * @param {Object} refactoring refactoring data
  * @param {LEFT_SIDE|RIGHT_SIDE} side diff side
  */
-function addRefactorings(fileMap, refactoring, side) {
+const addRefactorings = (fileMap, refactoring, side) => {
+    let diffHTML;
+    if (refactoring.diff) {
+        diffHTML = diff2Html.html(
+            `--- a/${refactoring.before_file_name}\n+++ b/${refactoring.after_file_name}\n${refactoring.diff}`,
+            {
+                drawFileList: false,
+                outputFormat: "side-by-side",
+            }
+        );
+    }
+
     let beforeFile = fileMap[refactoring.before_file_name];
     let afterFile = fileMap[refactoring.after_file_name];
 
@@ -162,8 +221,11 @@ function addRefactorings(fileMap, refactoring, side) {
         link = `${afterFile.link}R${refactoring.after_line_number}`;
     }
 
-    baseFile.querySelectorAll(selector).forEach(line => {
-        if (!line.querySelector(`[data-line="${lineNumber}"]`)) {
+    baseFile.querySelectorAll(selector).forEach((line) => {
+        if (
+            !line.querySelector(`[data-line="${lineNumber}"]`) ||
+            line.querySelector(".btn-refector")
+        ) {
             return;
         }
 
@@ -177,7 +239,7 @@ function addRefactorings(fileMap, refactoring, side) {
             case "INTERNAL_MOVE":
                 contentHTML = `<p><code>${refactoring.object_type.toLowerCase()} ${
                     refactoring.before_local_name
-                    }</code> moved.</p>`;
+                }</code> moved.</p>`;
                 contentHTML += `<p>Source: <code>${refactoring.before_file_name}:${refactoring.before_line_number}</code></p>`;
                 contentHTML += `<p>Target: <code>${refactoring.after_file_name}:${refactoring.after_line_number}</code></p>`;
                 break;
@@ -185,9 +247,9 @@ function addRefactorings(fileMap, refactoring, side) {
                 title = "EXTRACT " + refactoring.object_type.toUpperCase();
                 contentHTML = `<p>${refactoring.object_type.toLowerCase()} <code> ${
                     refactoring.after_local_name
-                    }</code> extracted from class <code>${
+                }</code> extracted from class <code>${
                     refactoring.before_local_name
-                    }</code>.</p>`;
+                }</code>.</p>`;
                 contentHTML += `<p>Source: <code>${refactoring.before_file_name}:${refactoring.before_line_number}</code></p>`;
                 contentHTML += `<p>Target: <code>${refactoring.after_file_name}:${refactoring.after_line_number}</code></p>`;
                 break;
@@ -195,18 +257,16 @@ function addRefactorings(fileMap, refactoring, side) {
             case "EXTRACT_MOVE":
                 contentHTML = `<p>${refactoring.object_type.toLowerCase()} <code>${
                     refactoring.after_local_name
-                    }</code> extracted from <code>${refactoring.object_type.toLowerCase()} ${
+                }</code> extracted from <code>${refactoring.object_type.toLowerCase()} ${
                     refactoring.before_local_name
-                    }</code>.</p>`;
+                }</code>.</p>`;
                 contentHTML += `<p>Source: <code>${refactoring.before_file_name}:${refactoring.before_line_number}</code></p>`;
                 contentHTML += `<p>Target: <code>${refactoring.after_file_name}:${refactoring.after_line_number}</code></p>`;
                 break;
             case "INLINE":
-                contentHTML = `<p>Inline <code>${refactoring.object_type.toLowerCase()} ${
+                contentHTML = `<p>Inline function <code>${refactoring.object_type.toLowerCase()} ${
                     refactoring.before_local_name
-                    }</code> in <code> ${
-                    refactoring.after_local_name
-                    }</code>.</p>`;
+                }</code> in <code> ${refactoring.after_local_name}</code>.</p>`;
                 contentHTML += `<p>Source: <code>${refactoring.before_file_name}:${refactoring.before_line_number}</code></p>`;
                 contentHTML += `<p>Target: <code>${refactoring.after_file_name}:${refactoring.after_line_number}</code></p>`;
                 break;
@@ -215,9 +275,9 @@ function addRefactorings(fileMap, refactoring, side) {
                 title = `${refactoring.type} ${refactoring.object_type}`;
                 contentHTML = `<p>${
                     refactoring.type
-                    }: ${refactoring.object_type.toLowerCase()} <code>${
+                }: ${refactoring.object_type.toLowerCase()} <code>${
                     refactoring.before_local_name
-                    }</code></p>`;
+                }</code></p>`;
                 contentHTML += `<p>Source: <code>${refactoring.before_file_name}:${refactoring.before_line_number}</code></p>`;
                 contentHTML += `<p>Target: <code>${refactoring.after_file_name}:${refactoring.after_line_number}</code></p>`;
         }
@@ -225,9 +285,17 @@ function addRefactorings(fileMap, refactoring, side) {
         let button = document.createElement("button");
         button.setAttribute("class", "btn-refector");
         button.addEventListener("click", () => {
-            popup.show(button, title, contentHTML, link, buttonText);
+            popup.show(
+                button,
+                title,
+                contentHTML,
+                link,
+                buttonText,
+                side,
+                diffHTML
+            );
         });
         button.innerText = "R";
         line.appendChild(button);
     });
-}
+};

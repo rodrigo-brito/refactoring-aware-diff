@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bulma@0.8.2/css/bulma.min.css"
+/>
+<style type="text/css">
+    #mainPopup {
+        padding: 10px;
+        width: 400px;
+        font-family: Helvetica, Ubuntu, Arial, sans-serif;
+    }
+    h1 {
+        font-size: 2em;
+    }
+</style>
+
+<div id="mainPopup">
+    <p class="presentation">
+        Hi, <span class="user-name">rodrigo-brito</span> |
+        <a href="#" class="bt-logout">Logout</a>
+    </p>
+    <button class="button is-fullwidth bt-login">
+        <span class="icon">
+            <img src="github.png" alt="Gihub login" />
+        </span>
+        <span>Login with Github</span>
+    </button>
+    <hr />
+    <p>
+        Refactoring-Aware Code Reviews is an open source tool pipeline that
+        seamlessly enriches GitHub diff results with refactoring information.
+    </p>
+    <hr />
+    <button class="button is-link is-fullwidth bt-refresh">
+        <span>Refresh Refactorings</span>
+    </button>
+    <p class="has-text-centered has-text-grey-dark message-box"></p>
+</div>
+<script src="../js/build/browser-action.js"></script>
