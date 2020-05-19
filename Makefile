@@ -1,2 +1,2 @@
 zip:
-	zip build.zip -r css/ icons/ js/ manifest.json LICENSE
+	zip build.zip -r css/ icons/ html/ js/ manifest.json LICENSE
