@@ -3582,9 +3582,9 @@ onetime@^5.1.0:
   dependencies:
     mimic-fn "^2.1.0"
 
-open@^7.0.3:
-  version "7.0.3"
-  resolved "https://registry.yarnpkg.com/open/-/open-7.0.3.tgz#db551a1af9c7ab4c7af664139930826138531c48"
+open@^7.0.4:
+  version "7.0.4"
+  resolved "https://registry.yarnpkg.com/open/-/open-7.0.4.tgz#c28a9d315e5c98340bf979fdcb2e58664aa10d83"
   dependencies:
     is-docker "^2.0.0"
     is-wsl "^2.1.1"
