@@ -15,7 +15,7 @@
     },
     "dependencies": {
         "diff2html": "^3.1.7",
-        "firebase": "^7.14.4",
+        "firebase": "^7.14.5",
         "whatwg-fetch": "^3.0.0"
     }
 }
