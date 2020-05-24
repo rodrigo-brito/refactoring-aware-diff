@@ -1,7 +1,7 @@
 no_trace: false
 debounce: 300
 ignore: \.git/
-trig: [run]
+trig: [start]
 rules:
   - name: start
     match: \.go$
