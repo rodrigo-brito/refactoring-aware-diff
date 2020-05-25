@@ -9,7 +9,7 @@
         "build": "parcel --no-autoinstall --no-source-maps --no-hmr build js/content-script.js js/background.js --out-dir js/build/"
     },
     "devDependencies": {
-        "eslint": "^7.0.0",
+        "eslint": "^7.1.0",
         "open": "^7.0.4",
         "parcel-bundler": "^1.12.4"
     },
