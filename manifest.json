@@ -22,7 +22,7 @@
         {
             "run_at": "document_end",
             "matches": ["https://github.com/*"],
-            "css": ["css/inject.css", "css/diff2html.min.css"],
+            "css": ["css/inject.css", "css/diff2html.min.css", "css/prism.css"],
             "js": ["js/build/content-script.js"]
         }
     ],

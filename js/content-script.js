@@ -1,10 +1,18 @@
 import * as diff2Html from "diff2html";
+import * as Prism from "prismjs";
+
+// language highlight
+import "prismjs/components/prism-go";
+import "prismjs/components/prism-java";
+import "prismjs/components/prism-c";
+import "prismjs/components/prism-javascript";
+import "prismjs/components/prism-clike";
 
 const LEFT_SIDE = "left";
 const RIGHT_SIDE = "right";
 
-let fileMap = {};
-let popup = document.createElement("div");
+const fileMap = {};
+const popup = document.createElement("div");
 
 /**
  * Update global file map after url change
@@ -115,7 +123,21 @@ window.addEventListener("load", function () {
         <button class="diff-refector-popup-close btn btn-sm btn-default">x</button>
         <p><b class="refactor-type"></b></p>
         <div class="refactor-content"></div>
-        <div class="refactor-diff-box"></div>
+        <div class="refactor-diff-code"></div>
+        <div class="d2h-wrapper refactor-diff-extration-wrapper">
+            <div class="d2h-file-wrapper">
+                <div class="d2h-file-header">
+                    <span class="d2h-file-name-wrapper">
+                        <svg aria-hidden="true" class="d2h-icon" height="16" version="1.1" viewBox="0 0 12 16" width="12">
+                            <path d="M6 5H2v-1h4v1zM2 8h7v-1H2v1z m0 2h7v-1H2v1z m0 2h7v-1H2v1z m10-7.5v9.5c0 0.55-0.45 1-1 1H1c-0.55 0-1-0.45-1-1V2c0-0.55 0.45-1 1-1h7.5l3.5 3.5z m-1 0.5L8 2H1v12h10V5z"></path>
+                        </svg>
+                        <span class="d2h-file-name refactor-diff-extraction-name"></span>
+                        <span class="d2h-tag d2h-moved d2h-moved-tag">EXTRACT</span>
+                    </span>
+                </div>
+                <div class="refactor-diff-extraction"></div>
+            </div>
+        </div>
         <a class="btn btn-sm btn-primary refactor-link" href="#">Go to source</a>
     `;
 
@@ -126,12 +148,30 @@ window.addEventListener("load", function () {
         link,
         buttonText,
         side,
-        gitDiff
+        diff
     ) {
         popup.style.setProperty("display", "block");
         popup.querySelector(".refactor-content").innerHTML = contentHTML;
         popup.querySelector(".refactor-type").innerText = type;
-        popup.querySelector(".refactor-diff-box").innerHTML = gitDiff || "";
+        popup.querySelector(".refactor-diff-code").innerHTML = diff.code || "";
+        popup.querySelector(
+            ".refactor-diff-extraction"
+        ).innerHTML = diff.extraction
+            ? `<pre><code class="language-java">${diff.extraction}</code></pre>`
+            : "";
+
+        if (diff.extraction) {
+            popup
+                .querySelector(".refactor-diff-extration-wrapper")
+                .style.setProperty("display", "block");
+
+            popup.querySelector(".refactor-diff-extraction-name").innerText =
+                diff.filename;
+        } else {
+            popup
+                .querySelector(".refactor-diff-extration-wrapper")
+                .style.setProperty("display", "none");
+        }
 
         if (link) {
             let button = popup.querySelector(".refactor-link");
@@ -153,6 +193,8 @@ window.addEventListener("load", function () {
             sendEvent("duration-type", type, duration);
             sendEvent("duration-side", side, duration);
         }
+
+        console.log(top, left);
 
         popup.style.setProperty("top", top + "px");
         popup.style.setProperty("left", left - offset + "px");
@@ -187,14 +229,28 @@ window.addEventListener("load", function () {
  * @param {LEFT_SIDE|RIGHT_SIDE} side diff side
  */
 const addRefactorings = (fileMap, refactoring, side) => {
-    let diffHTML;
+    const diff = {};
     if (refactoring.diff) {
-        diffHTML = diff2Html.html(
-            `--- a/${refactoring.before_file_name}\n+++ b/${refactoring.after_file_name}\n${refactoring.diff}`,
+        const afterFileName = refactoring.extraction
+            ? refactoring.before_file_name
+            : refactoring.after_file_name;
+        diff.code = diff2Html.html(
+            `--- a/${refactoring.before_file_name}\n+++ b/${afterFileName}\n${refactoring.diff}`,
             {
                 drawFileList: false,
-                outputFormat: "side-by-side",
+                outputFormat: refactoring.extraction
+                    ? "line-by-line"
+                    : "side-by-side",
             }
+        );
+    }
+
+    if (refactoring.extraction) {
+        diff.filename = refactoring.after_file_name;
+        diff.extraction = Prism.highlight(
+            refactoring.extraction,
+            Prism.languages[refactoring.language || "clike"],
+            refactoring.language || "clike"
         );
     }
 
@@ -292,7 +348,7 @@ const addRefactorings = (fileMap, refactoring, side) => {
                 link,
                 buttonText,
                 side,
-                diffHTML
+                diff
             );
         });
         button.innerText = "R";

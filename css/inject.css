@@ -25,11 +25,15 @@
     box-shadow: inset 0px 0px 0px 1px #28a745;
 }
 
-.blob-code-deletion .btn-refector:hover {
+.blob-code-deletion .btn-refector:hover,
+.blob-code-deletion .btn-refector:focus,
+.blob-code-deletion .btn-refector:active {
     background: #d06b73;
 }
 
-.blob-code-addition .btn-refector:hover {
+.blob-code-addition .btn-refector:hover,
+.blob-code-addition .btn-refector:focus,
+.blob-code-addition .btn-refector:active {
     background: #85c794;
 }
 
@@ -40,7 +44,6 @@
     left: 0;
 
     z-index: 7;
-    max-width: 50vw;
     background-color: #ffffff;
     padding: 10px;
     border-radius: 5px;
@@ -52,4 +55,12 @@
 
 .diff-refector-popup-close {
     float: right;
+}
+
+.refactor-diff-extraction {
+    padding: 5px;
+    margin-bottom: 5px;
+    max-width: 50vw;
+    max-height: 200px;
+    overflow: scroll;
 }

@@ -19,8 +19,6 @@ firebase.initializeApp(firebaseConfig);
 firebase.auth().onAuthStateChanged(function (user) {
     if (user) {
         ga("send", "event", "login");
-    } else {
-        ga("send", "event", "logoff");
     }
 });
 
