@@ -1,6 +1,6 @@
 {
     "name": "Refactoring-aware review",
-    "version": "0.0.7",
+    "version": "0.0.9",
     "manifest_version": 2,
     "description": "Adds refactoring annotations to GitHub diff",
     "homepage_url": "https://github.com/rodrigo-brito/refactoring-diff",

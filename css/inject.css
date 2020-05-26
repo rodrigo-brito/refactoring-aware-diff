@@ -60,7 +60,14 @@
 .refactor-diff-extraction {
     padding: 5px;
     margin-bottom: 5px;
-    max-width: 50vw;
     max-height: 200px;
     overflow: scroll;
+}
+
+.d2h-moved.d2h-moved-tag {
+    display: none;
+}
+
+.d2h-extracted-tag {
+    border: 1px solid #3572b0;
 }

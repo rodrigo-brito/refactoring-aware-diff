@@ -62,12 +62,6 @@ chrome.runtime.onMessage.addListener(function (message, _, sendResponse) {
                     console.error(error);
                 });
             break;
-        case "refdiff-refresh":
-            // TODO: make a refresh in data
-            setTimeout(() => {
-                sendResponse({});
-            }, 1000);
-            break;
     }
     return true;
 });

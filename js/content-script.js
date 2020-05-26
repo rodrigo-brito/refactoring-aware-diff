@@ -26,7 +26,6 @@ const updateFileMap = () => {
 
         fileMap[fileName] = {
             ref: file,
-
             link: link,
         };
     });
@@ -39,12 +38,16 @@ const updateFileMap = () => {
  * @param {String} action
  */
 const sendEvent = (category, action, value) => {
-    chrome.runtime.sendMessage({
-        command: "event",
-        category: category,
-        action: action,
-        value: value,
-    });
+    try {
+        chrome.runtime.sendMessage({
+            command: "event",
+            category: category,
+            action: action,
+            value: value,
+        });
+    } catch (e) {
+        console.error(e);
+    }
 };
 
 /**
@@ -83,14 +86,11 @@ const debounceObserverTimeout = 100;
  * @param {Array} selectors list of CSS selectors to observe
  */
 const initObserver = (selectors) => {
-    console.log("observer init!");
     const observer = new MutationObserver(function (mutationsList) {
         for (let mutation of mutationsList) {
             if (mutation.type === "childList") {
                 clearTimeout(debounceObserver);
                 debounceObserver = setTimeout(function () {
-                    console.log("Content changed!");
-
                     // request data from firebase
                     chrome.runtime.sendMessage({
                         command: "refdiff-refactoring",
@@ -115,7 +115,6 @@ const initObserver = (selectors) => {
  * Plugin initialization after page load
  */
 window.addEventListener("load", function () {
-    console.log("filed loaded!!");
     initObserver(["#js-repo-pjax-container"]);
 
     popup.setAttribute("class", "diff-refector-popup");
@@ -132,7 +131,7 @@ window.addEventListener("load", function () {
                             <path d="M6 5H2v-1h4v1zM2 8h7v-1H2v1z m0 2h7v-1H2v1z m0 2h7v-1H2v1z m10-7.5v9.5c0 0.55-0.45 1-1 1H1c-0.55 0-1-0.45-1-1V2c0-0.55 0.45-1 1-1h7.5l3.5 3.5z m-1 0.5L8 2H1v12h10V5z"></path>
                         </svg>
                         <span class="d2h-file-name refactor-diff-extraction-name"></span>
-                        <span class="d2h-tag d2h-moved d2h-moved-tag">EXTRACT</span>
+                        <span class="d2h-tag d2h-moved d2h-extracted-tag">EXTRACT</span>
                     </span>
                 </div>
                 <div class="refactor-diff-extraction"></div>
@@ -174,17 +173,17 @@ window.addEventListener("load", function () {
         }
 
         if (link) {
-            let button = popup.querySelector(".refactor-link");
+            const button = popup.querySelector(".refactor-link");
             button.setAttribute("href", link);
             button.textContent = buttonText;
         }
 
         // pop-up offset to align box in left side
-        let offset = popup.getBoundingClientRect().width + 10;
+        const offset = popup.getBoundingClientRect().width + 10;
 
-        let bounds = element.getBoundingClientRect();
-        let left = (window.pageXOffset || element.scrollLeft) + bounds.left;
-        let top = (window.pageYOffset || element.scrollTop) + bounds.top;
+        const bounds = element.getBoundingClientRect();
+        const left = (window.pageXOffset || element.scrollLeft) + bounds.left;
+        const top = (window.pageYOffset || element.scrollTop) + bounds.top;
 
         // check if exists another open modal with unfinished time
         const lastTime = popup.getAttribute("data-time");
@@ -194,10 +193,8 @@ window.addEventListener("load", function () {
             sendEvent("duration-side", side, duration);
         }
 
-        console.log(top, left);
-
         popup.style.setProperty("top", top + "px");
-        popup.style.setProperty("left", left - offset + "px");
+        popup.style.setProperty("left", Math.max(15, left - offset) + "px");
         popup.setAttribute("data-time", +new Date());
         popup.setAttribute("data-type", type);
         popup.setAttribute("data-side", side);
@@ -238,9 +235,7 @@ const addRefactorings = (fileMap, refactoring, side) => {
             `--- a/${refactoring.before_file_name}\n+++ b/${afterFileName}\n${refactoring.diff}`,
             {
                 drawFileList: false,
-                outputFormat: refactoring.extraction
-                    ? "line-by-line"
-                    : "side-by-side",
+                outputFormat: "side-by-side",
             }
         );
     }

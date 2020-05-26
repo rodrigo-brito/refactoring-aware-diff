@@ -34489,13 +34489,6 @@ chrome.runtime.onMessage.addListener(function (message, _, sendResponse) {
       });
 
       break;
-
-    case "refdiff-refresh":
-      // TODO: make a refresh in data
-      setTimeout(function () {
-        sendResponse({});
-      }, 1000);
-      break;
   }
 
   return true;

@@ -5995,12 +5995,16 @@ var updateFileMap = function updateFileMap() {
 
 
 var sendEvent = function sendEvent(category, action, value) {
-  chrome.runtime.sendMessage({
-    command: "event",
-    category: category,
-    action: action,
-    value: value
-  });
+  try {
+    chrome.runtime.sendMessage({
+      command: "event",
+      category: category,
+      action: action,
+      value: value
+    });
+  } catch (e) {
+    console.error(e);
+  }
 };
 /**
  * Message receiver to handle data
@@ -6036,7 +6040,6 @@ var debounceObserverTimeout = 100;
  */
 
 var initObserver = function initObserver(selectors) {
-  console.log("observer init!");
   var observer = new MutationObserver(function (mutationsList) {
     var _iteratorNormalCompletion = true;
     var _didIteratorError = false;
@@ -6049,8 +6052,7 @@ var initObserver = function initObserver(selectors) {
         if (mutation.type === "childList") {
           clearTimeout(debounceObserver);
           debounceObserver = setTimeout(function () {
-            console.log("Content changed!"); // request data from firebase
-
+            // request data from firebase
             chrome.runtime.sendMessage({
               command: "refdiff-refactoring",
               url: document.location.href.split("#diff")[0]
@@ -6088,10 +6090,9 @@ var initObserver = function initObserver(selectors) {
 
 
 window.addEventListener("load", function () {
-  console.log("filed loaded!!");
   initObserver(["#js-repo-pjax-container"]);
   popup.setAttribute("class", "diff-refector-popup");
-  popup.innerHTML = "\n        <button class=\"diff-refector-popup-close btn btn-sm btn-default\">x</button>\n        <p><b class=\"refactor-type\"></b></p>\n        <div class=\"refactor-content\"></div>\n        <div class=\"refactor-diff-code\"></div>\n        <div class=\"d2h-wrapper refactor-diff-extration-wrapper\">\n            <div class=\"d2h-file-wrapper\">\n                <div class=\"d2h-file-header\">\n                    <span class=\"d2h-file-name-wrapper\">\n                        <svg aria-hidden=\"true\" class=\"d2h-icon\" height=\"16\" version=\"1.1\" viewBox=\"0 0 12 16\" width=\"12\">\n                            <path d=\"M6 5H2v-1h4v1zM2 8h7v-1H2v1z m0 2h7v-1H2v1z m0 2h7v-1H2v1z m10-7.5v9.5c0 0.55-0.45 1-1 1H1c-0.55 0-1-0.45-1-1V2c0-0.55 0.45-1 1-1h7.5l3.5 3.5z m-1 0.5L8 2H1v12h10V5z\"></path>\n                        </svg>\n                        <span class=\"d2h-file-name refactor-diff-extraction-name\"></span>\n                        <span class=\"d2h-tag d2h-moved d2h-moved-tag\">EXTRACT</span>\n                    </span>\n                </div>\n                <div class=\"refactor-diff-extraction\"></div>\n            </div>\n        </div>\n        <a class=\"btn btn-sm btn-primary refactor-link\" href=\"#\">Go to source</a>\n    ";
+  popup.innerHTML = "\n        <button class=\"diff-refector-popup-close btn btn-sm btn-default\">x</button>\n        <p><b class=\"refactor-type\"></b></p>\n        <div class=\"refactor-content\"></div>\n        <div class=\"refactor-diff-code\"></div>\n        <div class=\"d2h-wrapper refactor-diff-extration-wrapper\">\n            <div class=\"d2h-file-wrapper\">\n                <div class=\"d2h-file-header\">\n                    <span class=\"d2h-file-name-wrapper\">\n                        <svg aria-hidden=\"true\" class=\"d2h-icon\" height=\"16\" version=\"1.1\" viewBox=\"0 0 12 16\" width=\"12\">\n                            <path d=\"M6 5H2v-1h4v1zM2 8h7v-1H2v1z m0 2h7v-1H2v1z m0 2h7v-1H2v1z m10-7.5v9.5c0 0.55-0.45 1-1 1H1c-0.55 0-1-0.45-1-1V2c0-0.55 0.45-1 1-1h7.5l3.5 3.5z m-1 0.5L8 2H1v12h10V5z\"></path>\n                        </svg>\n                        <span class=\"d2h-file-name refactor-diff-extraction-name\"></span>\n                        <span class=\"d2h-tag d2h-moved d2h-extracted-tag\">EXTRACT</span>\n                    </span>\n                </div>\n                <div class=\"refactor-diff-extraction\"></div>\n            </div>\n        </div>\n        <a class=\"btn btn-sm btn-primary refactor-link\" href=\"#\">Go to source</a>\n    ";
 
   popup.show = function (element, type, contentHTML, link, buttonText, side, diff) {
     popup.style.setProperty("display", "block");
@@ -6127,9 +6128,8 @@ window.addEventListener("load", function () {
       sendEvent("duration-side", side, duration);
     }
 
-    console.log(top, left);
     popup.style.setProperty("top", top + "px");
-    popup.style.setProperty("left", left - offset + "px");
+    popup.style.setProperty("left", Math.max(15, left - offset) + "px");
     popup.setAttribute("data-time", +new Date());
     popup.setAttribute("data-type", type);
     popup.setAttribute("data-side", side);
@@ -6163,7 +6163,7 @@ var addRefactorings = function addRefactorings(fileMap, refactoring, side) {
     var afterFileName = refactoring.extraction ? refactoring.before_file_name : refactoring.after_file_name;
     diff.code = diff2Html.html("--- a/".concat(refactoring.before_file_name, "\n+++ b/").concat(afterFileName, "\n").concat(refactoring.diff), {
       drawFileList: false,
-      outputFormat: refactoring.extraction ? "line-by-line" : "side-by-side"
+      outputFormat: "side-by-side"
     });
   }
 
