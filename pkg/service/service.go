@@ -17,6 +17,7 @@ type Refactoring interface {
 type Payload struct {
 	ID            string                      `json:"id"`
 	PullRequest   int                         `json:"pr"`
+	Language      string                      `json:"language"`
 	CreatedAt     time.Time                   `json:"created_at"`
 	ExecutionTime int                         `json:"execution_time"`
 	Refactorings  model.RefactoringCollection `json:"refactorings"`
@@ -55,6 +56,7 @@ func (r *refactoring) Fetch(ctx context.Context, id string) (*model.Job, error) 
 func (r *refactoring) Save(ctx context.Context, payload Payload) error {
 	_, err := r.firestore.Doc(payload.ID).Set(ctx, &model.Job{
 		PR:            payload.PullRequest,
+		Language:      payload.Language,
 		CreatedAt:     time.Now(),
 		Refactorings:  payload.Refactorings,
 		ExecutionTime: payload.ExecutionTime,

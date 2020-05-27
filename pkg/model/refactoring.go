@@ -4,6 +4,7 @@ import "time"
 
 type Job struct {
 	PR            int                   `firestore:"pr"`
+	Language      string                `firestore:"language"`
 	ExecutionTime int                   `firestore:"execution_time"`
 	CreatedAt     time.Time             `firestore:"created_at"`
 	Refactorings  RefactoringCollection `firestore:"refactorings"`
