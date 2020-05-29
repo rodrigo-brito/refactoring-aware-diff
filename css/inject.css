@@ -11,29 +11,29 @@
     user-select: none;
 }
 
-.blob-code-deletion .btn-refector {
+.btn-refactor-left {
     color: #cb2431;
     -webkit-box-shadow: inset 0px 0px 0px 1px #cb2431;
     -moz-box-shadow: inset 0px 0px 0px 1px #cb2431;
     box-shadow: inset 0px 0px 0px 1px #cb2431;
 }
 
-.blob-code-addition .btn-refector {
+.btn-refactor-right {
     color: #28a745;
     -webkit-box-shadow: inset 0px 0px 0px 1px #28a745;
     -moz-box-shadow: inset 0px 0px 0px 1px #28a745;
     box-shadow: inset 0px 0px 0px 1px #28a745;
 }
 
-.blob-code-deletion .btn-refector:hover,
-.blob-code-deletion .btn-refector:focus,
-.blob-code-deletion .btn-refector:active {
+.btn-refactor-left:hover,
+.btn-refactor-left:focus,
+.btn-refactor-left:active {
     background: #d06b73;
 }
 
-.blob-code-addition .btn-refector:hover,
-.blob-code-addition .btn-refector:focus,
-.blob-code-addition .btn-refector:active {
+.btn-refactor-right:hover,
+.btn-refactor-right:focus,
+.btn-refactor-right:active {
     background: #85c794;
 }
 
@@ -60,7 +60,7 @@
 .refactor-diff-extraction {
     padding: 5px;
     margin-bottom: 5px;
-    max-height: 200px;
+    max-height: 500px;
     overflow: scroll;
 }
 
@@ -70,4 +70,9 @@
 
 .d2h-extracted-tag {
     border: 1px solid #3572b0;
+}
+
+.diff-refector-action {
+    float: right;
+    margin-left: 5px;
 }

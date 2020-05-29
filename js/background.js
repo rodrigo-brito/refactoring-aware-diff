@@ -16,14 +16,14 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
-firebase.auth().onAuthStateChanged(function (user) {
+firebase.auth().onAuthStateChanged((user) => {
     if (user) {
         ga("send", "event", "login");
     }
 });
 
 const db = firebase.firestore();
-chrome.windows.onCreated.addListener(function () {
+chrome.windows.onCreated.addListener(() => {
     firebase.auth().currentUser;
 });
 
@@ -44,10 +44,10 @@ chrome.runtime.onMessage.addListener(function (message, _, sendResponse) {
             var auth = firebase.auth();
             auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
             auth.signInWithPopup(provider)
-                .then(function (response) {
+                .then((response) => {
                     sendResponse({ type: "loggedIn", user: response.user });
                 })
-                .catch(function (error) {
+                .catch((error) => {
                     console.error(error);
                 });
             break;
@@ -55,10 +55,10 @@ chrome.runtime.onMessage.addListener(function (message, _, sendResponse) {
             firebase
                 .auth()
                 .signOut()
-                .then(function () {
+                .then(() => {
                     sendResponse({ type: "loggedOut" });
                 })
-                .catch(function (error) {
+                .catch((error) => {
                     console.error(error);
                 });
             break;
