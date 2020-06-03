@@ -1,12 +1,12 @@
-# Refactoring-aware Code Reviews
+# RAID: Refactoring-aware and Intelligent Diffs
 
-![Tests and Lint](https://github.com/rodrigo-brito/refactoring-aware-review/workflows/Tests%20and%20Lint/badge.svg)
-![Chrome Web Store](https://img.shields.io/chrome-web-store/v/bclbegekihgpelanbbleaceefgmekjdd)
-[![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://lbesson.mit-license.org/)
+[![Tests and Lint](https://github.com/rodrigo-brito/refactoring-aware-diff/workflows/Tests%20and%20Lint/badge.svg)](https://github.com/rodrigo-brito/refactoring-aware-diff/actions)
+[![Chrome Web Store](https://img.shields.io/chrome-web-store/v/bclbegekihgpelanbbleaceefgmekjdd)](https://chrome.google.com/webstore/detail/refactoring-aware-diff/bclbegekihgpelanbbleaceefgmekjdd)
+[![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 Code review is a key practice in modern software development. Currently, this practice is performed using textual diff tools, such as the one provided by GitHub. However, diff results can easily become complex and hard to understand. Refactorings, for example, are not represented at all in diff results. This makes diff understanding more complex because reviewers need to infer themselves that a given group of added and removed lines of code represent, for example, an extract method.
 
-Refactoring-Aware Code Reviews is a tool pipeline that seamlessly enriches GitHub diff results with refactoring information. See the following figure:
+RAID is a tool pipeline that seamlessly enriches GitHub diff results with refactoring information. See the following figure:
 
 <p align="center">
     <img src="https://user-images.githubusercontent.com/7620947/76000414-706c7f80-5ee2-11ea-8f21-06bfb2646b36.png" width= "400px" />
@@ -16,7 +16,7 @@ As presented in this figure, this pipeline has three key components:
 
 -   [RefDiff](https://github.com/aserg-ufmg/RefDiff): a tool to detect refactoring operations in commits. We rely on GitHub Actions to automatically execute RefDiff after each Pull Request.
 
--   An [external server](https://github.com/rodrigo-brito/refactoring-aware-review/tree/server), that collects the list of refactorings produced by RefDiff.
+-   An [external server](https://github.com/rodrigo-brito/refactoring-aware-diff/tree/server), that collects the list of refactorings produced by RefDiff.
 
 -   A [Chrome plug-in](https://chrome.google.com/webstore/detail/refactoring-aware-review/bclbegekihgpelanbbleaceefgmekjdd) that seamlessly annotates diff chunks with refactoring data (see the following snapshot).
 
@@ -55,18 +55,18 @@ jobs:
               with:
                   fetch-depth: 0
 
-            - name: RefDiff
+            - name: raid
               env:
                   LANGUAGE: ${{ github.event.repository.language }} # Supports Java, Javascrit, C and Go.
                   REV_BEFORE: ${{ github.event.pull_request.base.sha }}
                   REV_AFTER: ${{ github.event.pull_request.head.sha }}
-              uses: rodrigo-brito/refactoring-aware-review@action
+              uses: rodrigo-brito/refactoring-aware-diff@action
 ```
 
 ## Simple Example
 
-We created a simple pull request with commits including toy refactorings, to illustrate the usage of our plug-in. See [here](https://github.com/rodrigo-brito/refactoring-aware-review/pull/5/commits) (but first you need to install our plug in).
+We created a simple pull request with commits including toy refactorings, to illustrate the usage of our plug-in. See [here](https://github.com/rodrigo-brito/refactoring-aware-diff/pull/5/commits) (but first you need to install our plug in).
 
 ## License
 
-Distributed under the MIT License. See `LICENSE` for more information.
+Distributed under the MIT License. See [LICENSE](LICENSE) for more information.
