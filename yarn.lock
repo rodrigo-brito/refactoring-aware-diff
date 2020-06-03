@@ -739,16 +739,16 @@
     faye-websocket "0.11.3"
     tslib "1.11.1"
 
-"@firebase/firestore-types@1.10.2":
-  version "1.10.2"
-  resolved "https://registry.yarnpkg.com/@firebase/firestore-types/-/firestore-types-1.10.2.tgz#b2286332c25dbe15becb9153ba3eedf7ab6c2a88"
+"@firebase/firestore-types@1.10.3":
+  version "1.10.3"
+  resolved "https://registry.yarnpkg.com/@firebase/firestore-types/-/firestore-types-1.10.3.tgz#e873b4be5cc8dfc240a32ecade83ad3311d4601e"
 
-"@firebase/firestore@1.14.5":
-  version "1.14.5"
-  resolved "https://registry.yarnpkg.com/@firebase/firestore/-/firestore-1.14.5.tgz#0d7526ab8bec3e45726daad3c7c34b6aa09a71e2"
+"@firebase/firestore@1.14.6":
+  version "1.14.6"
+  resolved "https://registry.yarnpkg.com/@firebase/firestore/-/firestore-1.14.6.tgz#40a23bcdaa94b78e723d4e2ff3e14320bf250486"
   dependencies:
     "@firebase/component" "0.1.12"
-    "@firebase/firestore-types" "1.10.2"
+    "@firebase/firestore-types" "1.10.3"
     "@firebase/logger" "0.2.4"
     "@firebase/util" "0.2.47"
     "@firebase/webchannel-wrapper" "0.2.41"
@@ -807,9 +807,9 @@
   version "0.0.13"
   resolved "https://registry.yarnpkg.com/@firebase/performance-types/-/performance-types-0.0.13.tgz#58ce5453f57e34b18186f74ef11550dfc558ede6"
 
-"@firebase/performance@0.3.4":
-  version "0.3.4"
-  resolved "https://registry.yarnpkg.com/@firebase/performance/-/performance-0.3.4.tgz#d2e4f33c3ddc35dd090ba86da4dc6087b083d996"
+"@firebase/performance@0.3.5":
+  version "0.3.5"
+  resolved "https://registry.yarnpkg.com/@firebase/performance/-/performance-0.3.5.tgz#e6007563c4115994f8b4eef7d6cd7fe877d74428"
   dependencies:
     "@firebase/component" "0.1.12"
     "@firebase/installations" "0.4.10"
@@ -2423,20 +2423,20 @@ find-up@^3.0.0:
   dependencies:
     locate-path "^3.0.0"
 
-firebase@^7.14.5:
-  version "7.14.5"
-  resolved "https://registry.yarnpkg.com/firebase/-/firebase-7.14.5.tgz#cf1be9c7f0603c6c2f45f65c7d817f6b22114a4b"
+firebase@^7.14.6:
+  version "7.14.6"
+  resolved "https://registry.yarnpkg.com/firebase/-/firebase-7.14.6.tgz#5b82d9700faaf6b14fc8a6f9bc690139aecea76b"
   dependencies:
     "@firebase/analytics" "0.3.5"
     "@firebase/app" "0.6.4"
     "@firebase/app-types" "0.6.1"
     "@firebase/auth" "0.14.6"
     "@firebase/database" "0.6.3"
-    "@firebase/firestore" "1.14.5"
+    "@firebase/firestore" "1.14.6"
     "@firebase/functions" "0.4.44"
     "@firebase/installations" "0.4.10"
     "@firebase/messaging" "0.6.16"
-    "@firebase/performance" "0.3.4"
+    "@firebase/performance" "0.3.5"
     "@firebase/polyfill" "0.3.36"
     "@firebase/remote-config" "0.1.21"
     "@firebase/storage" "0.3.34"
