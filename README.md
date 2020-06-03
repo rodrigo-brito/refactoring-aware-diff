@@ -22,7 +22,7 @@ As presented in this figure, this pipeline has three key components:
 
 #### Move Method
 
-![Move Method](https://user-images.githubusercontent.com/7620947/76126244-58c5f180-5fdd-11ea-9212-445c147d31cb.png)
+![Move Method](https://user-images.githubusercontent.com/7620947/83657276-058d1c00-a597-11ea-811b-6761bdf2d58e.png)
 
 #### Pull Up Method
 
