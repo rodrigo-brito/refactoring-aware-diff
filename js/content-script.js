@@ -8,28 +8,41 @@ import "prismjs/components/prism-c";
 import "prismjs/components/prism-javascript";
 import "prismjs/components/prism-clike";
 
+const ENV = "production";
 const LEFT_SIDE = "left";
 const RIGHT_SIDE = "right";
 
 const fileMap = {};
 const popup = document.createElement("div");
 
+const debug = (value) => {
+    if (ENV !== "development") {
+        return;
+    }
+
+    console.log(value);
+};
+
 /**
  * Update global file map after url change
  */
 const updateFileMap = () => {
-    let files = document.querySelectorAll(".file");
-    files.forEach((file) => {
-        let header = file.querySelector(".file-info > a");
-        let fileName = header.textContent;
-        let link = header.getAttribute("href");
+    let changed = false;
+    document.querySelectorAll(".file").forEach((file) => {
+        const header = file.querySelector(".file-info > a");
+        const fileName = header.textContent;
+        const link = header.getAttribute("href");
+
+        if (!fileMap[fileName]) {
+            changed = true;
+        }
 
         fileMap[fileName] = {
             ref: file,
             link: link,
         };
     });
-    return files.length > 0;
+    return changed;
 };
 
 /**
@@ -56,11 +69,9 @@ const sendEvent = (category, action, value) => {
 chrome.runtime.onMessage.addListener(function (request) {
     switch (request.command) {
         case "refdiff-refactoring":
-            popup.style.setProperty("display", "none");
-
-            // check if diff files are loaded
+            // check if diff files are loaded and changed
             if (!updateFileMap()) {
-                return;
+                debug("no new files");
             }
 
             // no refactorings found
@@ -68,9 +79,10 @@ chrome.runtime.onMessage.addListener(function (request) {
                 return;
             }
 
-            console.log(
+            debug(
                 "Loading: " + request.data.refactorings.length + " refactorings"
             );
+
             request.data.refactorings.forEach((refactoring) => {
                 addRefactorings(fileMap, refactoring, LEFT_SIDE);
                 addRefactorings(fileMap, refactoring, RIGHT_SIDE);
@@ -91,6 +103,14 @@ const initObserver = (selectors) => {
             if (mutation.type === "childList") {
                 clearTimeout(debounceObserver);
                 debounceObserver = setTimeout(function () {
+                    if (
+                        !updateFileMap() &&
+                        document.querySelector(".btn-refector")
+                    ) {
+                        debug("Files without change");
+                        return;
+                    }
+
                     // request data from firebase
                     chrome.runtime.sendMessage({
                         command: "refdiff-refactoring",
@@ -192,7 +212,7 @@ window.addEventListener("load", function () {
         // check if exists another open modal with unfinished time
         const lastTime = popup.getAttribute("data-time");
         if (lastTime) {
-            const duration = (+new Date() - lastTime) / 1000.0;
+            const duration = Math.round((+new Date() - lastTime) / 100);
             sendEvent("duration-type", type, duration);
             sendEvent("duration-side", side, duration);
         }
@@ -216,12 +236,13 @@ window.addEventListener("load", function () {
             const type = popup.getAttribute("data-type");
             const side = popup.getAttribute("data-side");
             const openTime = Number(popup.getAttribute("data-time"));
-            const duration = (+new Date() - openTime) / 1000.0;
+            const duration = Math.round((+new Date() - openTime) / 100);
 
             popup.removeAttribute("data-time");
+            popup.style.setProperty("display", "none");
+
             sendEvent("duration-type", type, duration);
             sendEvent("duration-side", side, duration);
-            popup.style.setProperty("display", "none");
         });
 
     popup
@@ -261,7 +282,8 @@ window.addEventListener("load", function () {
  * @param {LEFT_SIDE|RIGHT_SIDE} side diff side
  */
 const addRefactorings = (fileMap, refactoring, side) => {
-    console.log(refactoring);
+    debug(side);
+    debug(refactoring);
     const diff = {};
     if (refactoring.diff) {
         const afterFileName = refactoring.extraction
@@ -320,7 +342,11 @@ const addRefactorings = (fileMap, refactoring, side) => {
             }
 
             // avoid duplication, skip if found an anotation
-            if (line.querySelector(".blob-code .btn-refector")) {
+            if (
+                line.querySelector(
+                    `[data-line-number="${lineNumber}"]${selectorLineSufix}~.blob-code .btn-refector`
+                )
+            ) {
                 return true;
             }
 
@@ -402,7 +428,6 @@ const addRefactorings = (fileMap, refactoring, side) => {
                 );
             });
             button.innerText = "R";
-            // debugger;
             const sel = `[data-line-number="${lineNumber}"]${selectorLineSufix}~.blob-code`;
             const sides = line.querySelectorAll(sel);
             if (side == LEFT_SIDE) {

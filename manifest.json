@@ -1,9 +1,9 @@
 {
-    "name": "Refactoring-aware review",
-    "version": "0.0.10",
+    "name": "RAID: Refactoring-aware and Intelligent Diffs",
+    "version": "0.0.11",
     "manifest_version": 2,
     "description": "Adds refactoring annotations to GitHub diff",
-    "homepage_url": "https://github.com/rodrigo-brito/refactoring-diff",
+    "homepage_url": "https://github.com/rodrigo-brito/refactoring-aware-diff",
     "icons": {
         "16": "icons/icon16.png",
         "48": "icons/icon48.png",
