@@ -20,6 +20,8 @@ As presented in this figure, this pipeline has three key components:
 
 -   A [Chrome plug-in](https://chrome.google.com/webstore/detail/refactoring-aware-review/bclbegekihgpelanbbleaceefgmekjdd) that seamlessly annotates diff chunks with refactoring data (see the following snapshot).
 
+![result](https://user-images.githubusercontent.com/7620947/83893436-4ff0d300-a726-11ea-8a4d-48d34c36d115.gif)
+
 #### Move Method
 
 ![Move Method](https://user-images.githubusercontent.com/7620947/83657276-058d1c00-a597-11ea-811b-6761bdf2d58e.png)
