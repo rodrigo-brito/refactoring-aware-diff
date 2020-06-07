@@ -34433,9 +34433,11 @@ var firebaseConfig = {
 
 _app.default.initializeApp(firebaseConfig);
 
+var authUser = _app.default.auth().currentUser;
+
 _app.default.auth().onAuthStateChanged(function (user) {
   if (user) {
-    ga("send", "event", "login");
+    authUser = user;
   }
 });
 
@@ -34447,12 +34449,10 @@ chrome.windows.onCreated.addListener(function () {
 chrome.runtime.onMessage.addListener(function (message, _, sendResponse) {
   switch (message.type) {
     case "refdiff-login-status":
-      var user = _app.default.auth().currentUser;
-
-      if (user) {
+      if (authUser) {
         sendResponse({
           type: "loggedIn",
-          user: user
+          user: authUser
         });
       } else {
         sendResponse({
@@ -34477,10 +34477,12 @@ chrome.runtime.onMessage.addListener(function (message, _, sendResponse) {
       }).catch(function (error) {
         console.error(error);
       });
+      ga("send", "event", "login");
       break;
 
     case "refdiff-logout":
       _app.default.auth().signOut().then(function () {
+        authUser = null;
         sendResponse({
           type: "loggedOut"
         });
@@ -34488,6 +34490,7 @@ chrome.runtime.onMessage.addListener(function (message, _, sendResponse) {
         console.error(error);
       });
 
+      ga("send", "event", "logout");
       break;
   }
 
@@ -34537,7 +34540,6 @@ chrome.runtime.onMessage.addListener(function (request, _, sendResponse) {
         return querySnapshot.data();
       }).then(function (data) {
         if (data) {
-          // register view in diff refactoring
           ga("send", "pageview", "/" + docID);
         }
 
@@ -34559,7 +34561,7 @@ chrome.runtime.onMessage.addListener(function (request, _, sendResponse) {
       break;
 
     case "event":
-      ga("send", "event", request.category, request.action, request.value);
+      ga("send", "event", request.category, request.action, request.label, request.value);
   }
 
   return true;

@@ -16,9 +16,10 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
+let authUser = firebase.auth().currentUser;
 firebase.auth().onAuthStateChanged((user) => {
     if (user) {
-        ga("send", "event", "login");
+        authUser = user;
     }
 });
 
@@ -30,9 +31,8 @@ chrome.windows.onCreated.addListener(() => {
 chrome.runtime.onMessage.addListener(function (message, _, sendResponse) {
     switch (message.type) {
         case "refdiff-login-status":
-            var user = firebase.auth().currentUser;
-            if (user) {
-                sendResponse({ type: "loggedIn", user: user });
+            if (authUser) {
+                sendResponse({ type: "loggedIn", user: authUser });
             } else {
                 sendResponse({ type: "loggedOut" });
             }
@@ -50,17 +50,20 @@ chrome.runtime.onMessage.addListener(function (message, _, sendResponse) {
                 .catch((error) => {
                     console.error(error);
                 });
+            ga("send", "event", "login");
             break;
         case "refdiff-logout":
             firebase
                 .auth()
                 .signOut()
                 .then(() => {
+                    authUser = null;
                     sendResponse({ type: "loggedOut" });
                 })
                 .catch((error) => {
                     console.error(error);
                 });
+            ga("send", "event", "logout");
             break;
     }
     return true;
@@ -76,9 +79,11 @@ const sendMessage = (data) => {
 const regexCommit = new RegExp(
     /github\.com\/([\w_-]+)\/([\w_-]+)\/(?:pull\/\d+\/)?commits?\/(\w+)/
 );
+
 const regexPullRequest = new RegExp(
     /github\.com\/([\w_-]+)\/([\w_-]+)\/pull\/(\d+)/
 );
+
 const getDocIDFromURL = (url) => {
     let urlParts = regexCommit.exec(url);
     if (urlParts) {
@@ -109,7 +114,6 @@ chrome.runtime.onMessage.addListener(function (request, _, sendResponse) {
                 })
                 .then((data) => {
                     if (data) {
-                        // register view in diff refactoring
                         ga("send", "pageview", "/" + docID);
                     }
 
@@ -136,6 +140,7 @@ chrome.runtime.onMessage.addListener(function (request, _, sendResponse) {
                 "event",
                 request.category,
                 request.action,
+                request.label,
                 request.value
             );
     }

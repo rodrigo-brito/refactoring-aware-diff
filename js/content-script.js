@@ -8,7 +8,8 @@ import "prismjs/components/prism-c";
 import "prismjs/components/prism-javascript";
 import "prismjs/components/prism-clike";
 
-const ENV = "production";
+// const ENV = "production";
+const ENV = "development";
 const LEFT_SIDE = "left";
 const RIGHT_SIDE = "right";
 
@@ -19,7 +20,6 @@ const debug = (value) => {
     if (ENV !== "development") {
         return;
     }
-
     console.log(value);
 };
 
@@ -50,12 +50,19 @@ const updateFileMap = () => {
  * @param {String} category
  * @param {String} action
  */
-const sendEvent = (category, action, value) => {
+const sendEvent = (category, action, label, value) => {
+    debug({
+        category,
+        action,
+        label,
+        value,
+    });
     try {
         chrome.runtime.sendMessage({
             command: "event",
             category: category,
             action: action,
+            label: label,
             value: value,
         });
     } catch (e) {
@@ -196,6 +203,10 @@ window.addEventListener("load", function () {
             const button = popup.querySelector(".refactor-link");
             button.setAttribute("href", link);
             button.textContent = buttonText;
+            button.addEventListener("click", () => {
+                sendEvent("click", "goto-side", side);
+                sendEvent("click", "goto-type", type);
+            });
         }
 
         popup.style.setProperty("display", "block");
@@ -213,8 +224,8 @@ window.addEventListener("load", function () {
         const lastTime = popup.getAttribute("data-time");
         if (lastTime) {
             const duration = Math.round((+new Date() - lastTime) / 100);
-            sendEvent("duration-type", type, duration);
-            sendEvent("duration-side", side, duration);
+            sendEvent("duration", "type", type, duration);
+            sendEvent("duration", "side", side, duration);
         }
 
         popup.style.setProperty("top", top + "px");
@@ -225,8 +236,8 @@ window.addEventListener("load", function () {
         popup.removeAttribute("data-left");
         popup.removeAttribute("data-right");
 
-        sendEvent("open-type", type);
-        sendEvent("open-side", side);
+        sendEvent("click", "type", type);
+        sendEvent("click", "side", side);
     };
 
     document.body.appendChild(popup);
@@ -241,8 +252,8 @@ window.addEventListener("load", function () {
             popup.removeAttribute("data-time");
             popup.style.setProperty("display", "none");
 
-            sendEvent("duration-type", type, duration);
-            sendEvent("duration-side", side, duration);
+            sendEvent("duration", "type", type, duration);
+            sendEvent("duration", "side", side, duration);
         });
 
     popup
@@ -271,7 +282,7 @@ window.addEventListener("load", function () {
                 popup.style.setProperty("right", "15px");
             }
 
-            sendEvent("maximize", popup.getAttribute("data-type"));
+            sendEvent("click", "maximize", popup.getAttribute("data-type"));
         });
 });
 
