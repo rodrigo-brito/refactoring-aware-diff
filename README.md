@@ -6,6 +6,8 @@
 
 Code review is a key practice in modern software development. Currently, this practice is performed using textual diff tools, such as the one provided by GitHub. However, diff results can easily become complex and hard to understand. Refactorings, for example, are not represented at all in diff results. This makes diff understanding more complex because reviewers need to infer themselves that a given group of added and removed lines of code represent, for example, an extract method.
 
+![result](https://user-images.githubusercontent.com/7620947/83893436-4ff0d300-a726-11ea-8a4d-48d34c36d115.gif)
+
 RAID is a tool pipeline that seamlessly enriches GitHub diff results with refactoring information. See the following figure:
 
 <p align="center">
@@ -19,8 +21,6 @@ As presented in this figure, this pipeline has three key components:
 -   An [external server](https://github.com/rodrigo-brito/refactoring-aware-diff/tree/server), that collects the list of refactorings produced by RefDiff.
 
 -   A [Chrome plug-in](https://chrome.google.com/webstore/detail/refactoring-aware-review/bclbegekihgpelanbbleaceefgmekjdd) that seamlessly annotates diff chunks with refactoring data (see the following snapshot).
-
-![result](https://user-images.githubusercontent.com/7620947/83893436-4ff0d300-a726-11ea-8a4d-48d34c36d115.gif)
 
 #### Move Method
 
