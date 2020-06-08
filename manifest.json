@@ -14,6 +14,7 @@
         "default_title": "RAID: Refactoring-aware and Intelligent Diffs",
         "default_popup": "html/browser_action.html"
     },
+    "options_page": "html/options.html",
     "background": {
         "scripts": ["js/build/background.js"],
         "persistent": false

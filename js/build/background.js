@@ -34386,7 +34386,7 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 
-var _default = function _default() {
+var _default = function _default(project) {
   // Standard Google Universal Analytics code
   (function (i, s, o, g, r, a, m) {
     i["GoogleAnalyticsObject"] = r;
@@ -34399,7 +34399,7 @@ var _default = function _default() {
     m.parentNode.insertBefore(a, m);
   })(window, document, "script", "https://www.google-analytics.com/analytics.js", "ga");
 
-  ga("create", "UA-35546390-8", "auto");
+  ga("create", project, "auto");
   ga("set", "checkProtocolTask", function () {}); // Removes failing protocol check. @see: http://stackoverflow.com/a/22152353/1958200
 
   ga("require", "displayfeatures");
@@ -34419,30 +34419,31 @@ var _analytics = _interopRequireDefault(require("./analytics"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-// Init Google Analytics
-(0, _analytics.default)();
+var authUser;
 /**
- * Google Analytics
+ * Load settins and setup firebase
  */
 
-var firebaseConfig = {
+chrome.storage.sync.get({
+  projectID: "refdiff",
+  domain: "refdiff.firebaseapp.com",
   apiKey: "AIzaSyDIBgAmAXNdSZ_2jHMs9OxylexHitBnXIU",
-  authDomain: "refdiff.firebaseapp.com",
-  projectId: "refdiff"
-};
+  analytics: "UA-35546390-8"
+}, function (items) {
+  _app.default.initializeApp({
+    projectId: items.projectID || "refdiff",
+    authDomain: items.domain || "refdiff.firebaseapp.com",
+    apiKey: items.apiKey || "AIzaSyDIBgAmAXNdSZ_2jHMs9OxylexHitBnXIU"
+  });
 
-_app.default.initializeApp(firebaseConfig);
+  (0, _analytics.default)(items.analytics || "UA-35546390-8");
 
-var authUser = _app.default.auth().currentUser;
-
-_app.default.auth().onAuthStateChanged(function (user) {
-  if (user) {
-    authUser = user;
-  }
+  _app.default.auth().onAuthStateChanged(function (user) {
+    if (user) {
+      authUser = user;
+    }
+  });
 });
-
-var db = _app.default.firestore();
-
 chrome.windows.onCreated.addListener(function () {
   _app.default.auth().currentUser;
 });
@@ -34536,7 +34537,7 @@ chrome.runtime.onMessage.addListener(function (request, _, sendResponse) {
         return;
       }
 
-      db.doc(docID).get().then(function (querySnapshot) {
+      _app.default.firestore().doc(docID).get().then(function (querySnapshot) {
         return querySnapshot.data();
       }).then(function (data) {
         if (data) {
@@ -34558,6 +34559,7 @@ chrome.runtime.onMessage.addListener(function (request, _, sendResponse) {
         });
         sendResponse({});
       });
+
       break;
 
     case "event":

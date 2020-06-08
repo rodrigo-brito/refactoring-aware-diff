@@ -1,4 +1,4 @@
-export default () => {
+export default (project) => {
     // Standard Google Universal Analytics code
     (function (i, s, o, g, r, a, m) {
         i["GoogleAnalyticsObject"] = r;
@@ -20,7 +20,7 @@ export default () => {
         "ga"
     );
 
-    ga("create", "UA-35546390-8", "auto");
+    ga("create", project, "auto");
     ga("set", "checkProtocolTask", function () {}); // Removes failing protocol check. @see: http://stackoverflow.com/a/22152353/1958200
     ga("require", "displayfeatures");
 };

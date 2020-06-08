@@ -5,6 +5,7 @@ const entryFiles = [
     "./js/content-script.js",
     "./js/background.js",
     "./js/browser-action.js",
+    "./js/options.js",
 ];
 
 const options = {

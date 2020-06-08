@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>RAID: Refactoring-aware and Intelligent Diffs</title>
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/bulma@0.8.2/css/bulma.min.css"
+        />
+        <script src="../js/build/options.js"></script>
+    </head>
+    <body>
+        <div class="container">
+            <article class="panel is-info">
+                <p class="panel-heading">
+                    Custom Settings
+                </p>
+                <div class="panel-block">
+                    <div class="control">
+                        <div class="field">
+                            <div class="control">
+                                <label for="project-id"
+                                    >Firebase Project ID</label
+                                >
+                                <input
+                                    class="input"
+                                    id="project-id"
+                                    name="project-id"
+                                    type="text"
+                                    placeholder="Ex: my-app"
+                                />
+                            </div>
+                        </div>
+                        <div class="field">
+                            <div class="control">
+                                <label for="domain">Firebase Domain</label>
+                                <input
+                                    class="input"
+                                    id="domain"
+                                    name="domain"
+                                    type="text"
+                                    placeholder="Ex: my-app.firebaseapp.com"
+                                />
+                            </div>
+                        </div>
+                        <div class="field">
+                            <div class="control">
+                                <label for="api-key"
+                                    >Firebase Web API Key</label
+                                >
+                                <input
+                                    class="input"
+                                    id="api-key"
+                                    name="api-key"
+                                    type="password"
+                                    placeholder="Ex: BIzafyDIBgAmAXMdSZ_1jHMs94xylexHitCnXIA"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="panel-block">
+                    <div class="control">
+                        <label for="analytics">Googe Analytics Code</label>
+                        <input
+                            id="analytics"
+                            class="input"
+                            type="text"
+                            name="analytics"
+                            placeholder="Ex: UA-35546390-8"
+                        />
+                    </div>
+                </div>
+                <div class="panel-block">
+                    <button id="save" class="mr-3 button btn-save is-info">
+                        Salvar
+                    </button>
+                    &nbsp;<span class="has-text-success" id="message"></span>
+                </div>
+            </article>
+        </div>
+    </body>
+</html>

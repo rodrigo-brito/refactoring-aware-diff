@@ -8,8 +8,8 @@ import "prismjs/components/prism-c";
 import "prismjs/components/prism-javascript";
 import "prismjs/components/prism-clike";
 
-// const ENV = "production";
-const ENV = "development";
+const ENV = "production";
+// const ENV = "development";
 const LEFT_SIDE = "left";
 const RIGHT_SIDE = "right";
 

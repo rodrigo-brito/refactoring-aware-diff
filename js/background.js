@@ -3,27 +3,35 @@ import "firebase/firestore";
 import "firebase/auth";
 import initAnalytics from "./analytics";
 
-// Init Google Analytics
-initAnalytics();
+let authUser;
 
 /**
- * Google Analytics
+ * Load settins and setup firebase
  */
-const firebaseConfig = {
-    apiKey: "AIzaSyDIBgAmAXNdSZ_2jHMs9OxylexHitBnXIU",
-    authDomain: "refdiff.firebaseapp.com",
-    projectId: "refdiff",
-};
+chrome.storage.sync.get(
+    {
+        projectID: "refdiff",
+        domain: "refdiff.firebaseapp.com",
+        apiKey: "AIzaSyDIBgAmAXNdSZ_2jHMs9OxylexHitBnXIU",
+        analytics: "UA-35546390-8",
+    },
+    function (items) {
+        firebase.initializeApp({
+            projectId: items.projectID || "refdiff",
+            authDomain: items.domain || "refdiff.firebaseapp.com",
+            apiKey: items.apiKey || "AIzaSyDIBgAmAXNdSZ_2jHMs9OxylexHitBnXIU",
+        });
 
-firebase.initializeApp(firebaseConfig);
-let authUser = firebase.auth().currentUser;
-firebase.auth().onAuthStateChanged((user) => {
-    if (user) {
-        authUser = user;
+        initAnalytics(items.analytics || "UA-35546390-8");
+
+        firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+                authUser = user;
+            }
+        });
     }
-});
+);
 
-const db = firebase.firestore();
 chrome.windows.onCreated.addListener(() => {
     firebase.auth().currentUser;
 });
@@ -107,7 +115,9 @@ chrome.runtime.onMessage.addListener(function (request, _, sendResponse) {
                 return;
             }
 
-            db.doc(docID)
+            firebase
+                .firestore()
+                .doc(docID)
                 .get()
                 .then((querySnapshot) => {
                     return querySnapshot.data();
