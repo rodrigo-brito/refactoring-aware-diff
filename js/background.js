@@ -14,15 +14,27 @@ chrome.storage.sync.get(
         domain: "refdiff.firebaseapp.com",
         apiKey: "AIzaSyDIBgAmAXNdSZ_2jHMs9OxylexHitBnXIU",
         analytics: "UA-35546390-8",
+        email: "",
+        password: "",
     },
-    function (items) {
+    (data) => {
         firebase.initializeApp({
-            projectId: items.projectID || "refdiff",
-            authDomain: items.domain || "refdiff.firebaseapp.com",
-            apiKey: items.apiKey || "AIzaSyDIBgAmAXNdSZ_2jHMs9OxylexHitBnXIU",
+            projectId: data.projectID || "refdiff",
+            authDomain: data.domain || "refdiff.firebaseapp.com",
+            apiKey: data.apiKey || "AIzaSyDIBgAmAXNdSZ_2jHMs9OxylexHitBnXIU",
         });
 
-        initAnalytics(items.analytics || "UA-35546390-8");
+        initAnalytics(data.analytics || "UA-35546390-8");
+
+        if (data.email && data.password) {
+            firebase
+                .auth()
+                .signInWithEmailAndPassword(data.email, data.password)
+                .catch(console.error)
+                .then((data) => {
+                    authUser = data.user;
+                });
+        }
 
         firebase.auth().onAuthStateChanged((user) => {
             if (user) {
@@ -32,35 +44,76 @@ chrome.storage.sync.get(
     }
 );
 
-chrome.windows.onCreated.addListener(() => {
-    firebase.auth().currentUser;
-});
-
 chrome.runtime.onMessage.addListener(function (message, _, sendResponse) {
     switch (message.type) {
         case "refdiff-login-status":
-            if (authUser) {
-                sendResponse({ type: "loggedIn", user: authUser });
-            } else {
-                sendResponse({ type: "loggedOut" });
-            }
+            chrome.storage.sync.get(
+                {
+                    email: "",
+                    password: "",
+                },
+                (data) => {
+                    firebase
+                        .auth()
+                        .signInWithEmailAndPassword(data.email, data.password)
+                        .catch(function (error) {
+                            sendResponse({ type: "loggedOut" });
+                            console.log(error);
+                        })
+                        .then((data) => {
+                            sendResponse({ type: "loggedIn", user: data.user });
+                            authUser = data.user;
+                        });
+                }
+            );
             break;
         case "refdiff-login":
-            var provider = new firebase.auth.GithubAuthProvider();
-            provider.addScope("user");
+            chrome.storage.sync.get(
+                {
+                    email: "",
+                    password: "",
+                },
+                (data) => {
+                    if (!data.email || !data.password) {
+                        sendResponse({
+                            type: "loggedOut",
+                            message: "Missing data!",
+                        });
+                        return;
+                    }
 
-            var auth = firebase.auth();
-            auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-            auth.signInWithPopup(provider)
-                .then((response) => {
-                    sendResponse({ type: "loggedIn", user: response.user });
-                })
-                .catch((error) => {
-                    console.error(error);
-                });
-            ga("send", "event", "login");
+                    firebase
+                        .auth()
+                        .signInWithEmailAndPassword(data.email, data.password)
+                        .catch(function (error) {
+                            if (error.code === "auth/wrong-password") {
+                                sendResponse({
+                                    type: "loggedOut",
+                                    message: "Wrong password.",
+                                });
+                            } else {
+                                sendResponse({
+                                    type: "loggedOut",
+                                    message: error.message,
+                                });
+                            }
+                        })
+                        .then((data) => {
+                            sendResponse({
+                                type: "loggedIn",
+                                message: data,
+                            });
+                            authUser = data.user;
+                            ga("send", "event", "login");
+                        });
+                }
+            );
             break;
         case "refdiff-logout":
+            chrome.storage.sync.set({
+                email: "",
+                password: "",
+            });
             firebase
                 .auth()
                 .signOut()
@@ -153,6 +206,17 @@ chrome.runtime.onMessage.addListener(function (request, _, sendResponse) {
                 request.label,
                 request.value
             );
+
+            // TODO: remove afeter research experiment
+            // Write operations only authorized for specific users
+            if (authUser) {
+                console.log({
+                    category: request.category,
+                    action: request.action,
+                    label: request.label,
+                    value: request.value,
+                });
+            }
     }
     return true;
 });

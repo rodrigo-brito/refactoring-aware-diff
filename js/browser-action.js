@@ -6,18 +6,7 @@ window.addEventListener("DOMContentLoaded", () => {
     const userName = document.querySelector(".user-name");
     const messageBox = document.querySelector(".message-box");
 
-    const githubLoggin = () => {
-        chrome.runtime.sendMessage({ type: "refdiff-login" }, (response) => {
-            if (response.type == "loggedIn") {
-                presentation.classList.remove("is-hidden");
-                loginBtn.classList.add("is-hidden");
-                userName.textContent = response.user.displayName;
-            }
-            return true;
-        });
-    };
-
-    const githubLoggout = () => {
+    const githubLoggout = (e) => {
         chrome.runtime.sendMessage({ type: "refdiff-logout" }, (response) => {
             if (response.type == "loggedOut") {
                 presentation.classList.add("is-hidden");
@@ -25,12 +14,12 @@ window.addEventListener("DOMContentLoaded", () => {
             }
             return true;
         });
+        e.preventDefault();
     };
 
     const refershRefactorings = () => {
         refreshBtn.classList.add("is-loading");
         chrome.tabs.getSelected(null, function (tab) {
-            console.log("refresing ", tab.url);
             chrome.runtime.sendMessage(
                 { command: "refdiff-refactoring", url: tab.url },
                 (data) => {
@@ -46,18 +35,15 @@ window.addEventListener("DOMContentLoaded", () => {
         });
     };
 
-    loginBtn.addEventListener("click", githubLoggin);
     logoutBtn.addEventListener("click", githubLoggout);
     refreshBtn.addEventListener("click", refershRefactorings);
 
     chrome.runtime.sendMessage({ type: "refdiff-login-status" }, (response) => {
         if (response.type === "loggedIn") {
             presentation.classList.remove("is-hidden");
-            loginBtn.classList.add("is-hidden");
-            userName.textContent = response.user.displayName;
+            userName.textContent = response.user.email;
         } else if (response.type === "loggedOut") {
             presentation.classList.add("is-hidden");
-            loginBtn.classList.remove("is-hidden");
         }
         return true;
     });

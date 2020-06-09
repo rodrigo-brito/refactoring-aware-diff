@@ -123,31 +123,59 @@ document.addEventListener("DOMContentLoaded", function () {
   var domain = document.getElementById("domain");
   var apiKey = document.getElementById("api-key");
   var analytics = document.getElementById("analytics");
-  var button = document.getElementById("save");
-  var message = document.getElementById("message");
-  button.addEventListener("click", function () {
-    button.classList.add("is-loading");
-    console.log(projectID.value);
+  var saveButton = document.getElementById("save");
+  var saveMessage = document.getElementById("message-save");
+  var email = document.getElementById("email");
+  var password = document.getElementById("password");
+  var loginButton = document.getElementById("login");
+  var loginMessage = document.getElementById("message-login");
+  saveButton.addEventListener("click", function () {
+    saveButton.classList.add("is-loading");
     chrome.storage.sync.set({
       projectID: projectID.value,
       domain: domain.value,
       apiKey: apiKey.value,
       analytics: analytics.value
     }, function () {
-      button.classList.remove("is-loading");
-      message.innerText = "Saved successfully!";
+      saveButton.classList.remove("is-loading");
+      saveMessage.innerText = "Saved successfully!";
+    });
+  });
+  loginButton.addEventListener("click", function () {
+    loginButton.classList.add("is-loading");
+    chrome.storage.sync.set({
+      email: email.value,
+      password: password.value
+    }, function () {
+      chrome.runtime.sendMessage({
+        type: "refdiff-login"
+      }, function (response) {
+        loginButton.classList.remove("is-loading");
+
+        if (response.type == "loggedIn") {
+          loginMessage.innerText = "Saved successfully!";
+        } else {
+          loginMessage.innerText = response.message;
+        }
+
+        return true;
+      });
     });
   });
   chrome.storage.sync.get({
     projectID: "",
     domain: "",
     apiKey: "",
-    analytics: ""
-  }, function (items) {
-    projectID.value = items.projectID || "";
-    domain.value = items.domain || "";
-    apiKey.value = items.apiKey || "";
-    analytics.value = items.analytics || "";
+    analytics: "",
+    email: "",
+    password: ""
+  }, function (data) {
+    projectID.value = data.projectID || "";
+    domain.value = data.domain || "";
+    apiKey.value = data.apiKey || "";
+    analytics.value = data.analytics || "";
+    email.value = data.email || "";
+    password.value = data.password || "";
   });
 });
 },{}]},{},["options.js"], null)

@@ -126,21 +126,7 @@ window.addEventListener("DOMContentLoaded", function () {
   var userName = document.querySelector(".user-name");
   var messageBox = document.querySelector(".message-box");
 
-  var githubLoggin = function githubLoggin() {
-    chrome.runtime.sendMessage({
-      type: "refdiff-login"
-    }, function (response) {
-      if (response.type == "loggedIn") {
-        presentation.classList.remove("is-hidden");
-        loginBtn.classList.add("is-hidden");
-        userName.textContent = response.user.displayName;
-      }
-
-      return true;
-    });
-  };
-
-  var githubLoggout = function githubLoggout() {
+  var githubLoggout = function githubLoggout(e) {
     chrome.runtime.sendMessage({
       type: "refdiff-logout"
     }, function (response) {
@@ -151,12 +137,12 @@ window.addEventListener("DOMContentLoaded", function () {
 
       return true;
     });
+    e.preventDefault();
   };
 
   var refershRefactorings = function refershRefactorings() {
     refreshBtn.classList.add("is-loading");
     chrome.tabs.getSelected(null, function (tab) {
-      console.log("refresing ", tab.url);
       chrome.runtime.sendMessage({
         command: "refdiff-refactoring",
         url: tab.url
@@ -169,7 +155,6 @@ window.addEventListener("DOMContentLoaded", function () {
     });
   };
 
-  loginBtn.addEventListener("click", githubLoggin);
   logoutBtn.addEventListener("click", githubLoggout);
   refreshBtn.addEventListener("click", refershRefactorings);
   chrome.runtime.sendMessage({
@@ -177,11 +162,9 @@ window.addEventListener("DOMContentLoaded", function () {
   }, function (response) {
     if (response.type === "loggedIn") {
       presentation.classList.remove("is-hidden");
-      loginBtn.classList.add("is-hidden");
-      userName.textContent = response.user.displayName;
+      userName.textContent = response.user.email;
     } else if (response.type === "loggedOut") {
       presentation.classList.add("is-hidden");
-      loginBtn.classList.remove("is-hidden");
     }
 
     return true;

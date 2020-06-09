@@ -3,12 +3,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const domain = document.getElementById("domain");
     const apiKey = document.getElementById("api-key");
     const analytics = document.getElementById("analytics");
-    const button = document.getElementById("save");
-    const message = document.getElementById("message");
+    const saveButton = document.getElementById("save");
+    const saveMessage = document.getElementById("message-save");
 
-    button.addEventListener("click", () => {
-        button.classList.add("is-loading");
-        console.log(projectID.value);
+    const email = document.getElementById("email");
+    const password = document.getElementById("password");
+    const loginButton = document.getElementById("login");
+    const loginMessage = document.getElementById("message-login");
+
+    saveButton.addEventListener("click", () => {
+        saveButton.classList.add("is-loading");
         chrome.storage.sync.set(
             {
                 projectID: projectID.value,
@@ -17,8 +21,32 @@ document.addEventListener("DOMContentLoaded", () => {
                 analytics: analytics.value,
             },
             () => {
-                button.classList.remove("is-loading");
-                message.innerText = "Saved successfully!";
+                saveButton.classList.remove("is-loading");
+                saveMessage.innerText = "Saved successfully!";
+            }
+        );
+    });
+
+    loginButton.addEventListener("click", () => {
+        loginButton.classList.add("is-loading");
+        chrome.storage.sync.set(
+            {
+                email: email.value,
+                password: password.value,
+            },
+            () => {
+                chrome.runtime.sendMessage(
+                    { type: "refdiff-login" },
+                    (response) => {
+                        loginButton.classList.remove("is-loading");
+                        if (response.type == "loggedIn") {
+                            loginMessage.innerText = "Saved successfully!";
+                        } else {
+                            loginMessage.innerText = response.message;
+                        }
+                        return true;
+                    }
+                );
             }
         );
     });
@@ -29,12 +57,16 @@ document.addEventListener("DOMContentLoaded", () => {
             domain: "",
             apiKey: "",
             analytics: "",
+            email: "",
+            password: "",
         },
-        function (items) {
-            projectID.value = items.projectID || "";
-            domain.value = items.domain || "";
-            apiKey.value = items.apiKey || "";
-            analytics.value = items.analytics || "";
+        function (data) {
+            projectID.value = data.projectID || "";
+            domain.value = data.domain || "";
+            apiKey.value = data.apiKey || "";
+            analytics.value = data.analytics || "";
+            email.value = data.email || "";
+            password.value = data.password || "";
         }
     );
 });

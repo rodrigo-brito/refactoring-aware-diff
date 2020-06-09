@@ -34428,15 +34428,23 @@ chrome.storage.sync.get({
   projectID: "refdiff",
   domain: "refdiff.firebaseapp.com",
   apiKey: "AIzaSyDIBgAmAXNdSZ_2jHMs9OxylexHitBnXIU",
-  analytics: "UA-35546390-8"
-}, function (items) {
+  analytics: "UA-35546390-8",
+  email: "",
+  password: ""
+}, function (data) {
   _app.default.initializeApp({
-    projectId: items.projectID || "refdiff",
-    authDomain: items.domain || "refdiff.firebaseapp.com",
-    apiKey: items.apiKey || "AIzaSyDIBgAmAXNdSZ_2jHMs9OxylexHitBnXIU"
+    projectId: data.projectID || "refdiff",
+    authDomain: data.domain || "refdiff.firebaseapp.com",
+    apiKey: data.apiKey || "AIzaSyDIBgAmAXNdSZ_2jHMs9OxylexHitBnXIU"
   });
 
-  (0, _analytics.default)(items.analytics || "UA-35546390-8");
+  (0, _analytics.default)(data.analytics || "UA-35546390-8");
+
+  if (data.email && data.password) {
+    _app.default.auth().signInWithEmailAndPassword(data.email, data.password).catch(console.error).then(function (data) {
+      authUser = data.user;
+    });
+  }
 
   _app.default.auth().onAuthStateChanged(function (user) {
     if (user) {
@@ -34444,44 +34452,70 @@ chrome.storage.sync.get({
     }
   });
 });
-chrome.windows.onCreated.addListener(function () {
-  _app.default.auth().currentUser;
-});
 chrome.runtime.onMessage.addListener(function (message, _, sendResponse) {
   switch (message.type) {
     case "refdiff-login-status":
-      if (authUser) {
-        sendResponse({
-          type: "loggedIn",
-          user: authUser
+      chrome.storage.sync.get({
+        email: "",
+        password: ""
+      }, function (data) {
+        _app.default.auth().signInWithEmailAndPassword(data.email, data.password).catch(function (error) {
+          sendResponse({
+            type: "loggedOut"
+          });
+          console.log(error);
+        }).then(function (data) {
+          sendResponse({
+            type: "loggedIn",
+            user: data.user
+          });
+          authUser = data.user;
         });
-      } else {
-        sendResponse({
-          type: "loggedOut"
-        });
-      }
-
+      });
       break;
 
     case "refdiff-login":
-      var provider = new _app.default.auth.GithubAuthProvider();
-      provider.addScope("user");
+      chrome.storage.sync.get({
+        email: "",
+        password: ""
+      }, function (data) {
+        if (!data.email || !data.password) {
+          sendResponse({
+            type: "loggedOut",
+            message: "Missing data!"
+          });
+          return;
+        }
 
-      var auth = _app.default.auth();
-
-      auth.setPersistence(_app.default.auth.Auth.Persistence.LOCAL);
-      auth.signInWithPopup(provider).then(function (response) {
-        sendResponse({
-          type: "loggedIn",
-          user: response.user
+        _app.default.auth().signInWithEmailAndPassword(data.email, data.password).catch(function (error) {
+          if (error.code === "auth/wrong-password") {
+            sendResponse({
+              type: "loggedOut",
+              message: "Wrong password."
+            });
+          } else {
+            sendResponse({
+              type: "loggedOut",
+              message: error.message
+            });
+          }
+        }).then(function (data) {
+          sendResponse({
+            type: "loggedIn",
+            message: data
+          });
+          authUser = data.user;
+          ga("send", "event", "login");
         });
-      }).catch(function (error) {
-        console.error(error);
       });
-      ga("send", "event", "login");
       break;
 
     case "refdiff-logout":
+      chrome.storage.sync.set({
+        email: "",
+        password: ""
+      });
+
       _app.default.auth().signOut().then(function () {
         authUser = null;
         sendResponse({
@@ -34563,7 +34597,18 @@ chrome.runtime.onMessage.addListener(function (request, _, sendResponse) {
       break;
 
     case "event":
-      ga("send", "event", request.category, request.action, request.label, request.value);
+      ga("send", "event", request.category, request.action, request.label, request.value); // TODO: remove afeter research experiment
+      // Write operations only authorized for specific users
+
+      if (authUser) {
+        console.log({
+          category: request.category,
+          action: request.action,
+          label: request.label,
+          value: request.value
+        });
+      }
+
   }
 
   return true;
