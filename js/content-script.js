@@ -369,6 +369,11 @@ const addRefactorings = (fileMap, refactoring, side) => {
                 case "RENAME":
                     contentHTML = `<p><code>${refactoring.before_local_name}</code> renamed to <code>${refactoring.after_local_name}</code></p>`;
                     break;
+                case "CHANGE_SIGNATURE":
+                    contentHTML = "<p>Signature changed.</p>";
+                    contentHTML += `<p>Before: <code>${refactoring.before_local_name}</code></p>`;
+                    contentHTML += `<p>After: <code>${refactoring.after_local_name}</code></p>`;
+                    break;
                 case "MOVE":
                 case "INTERNAL_MOVE":
                     contentHTML = `<p><code>${refactoring.object_type.toLowerCase()} ${

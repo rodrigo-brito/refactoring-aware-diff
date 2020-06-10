@@ -137,8 +137,12 @@ document.addEventListener("DOMContentLoaded", function () {
       apiKey: apiKey.value,
       analytics: analytics.value
     }, function () {
-      saveButton.classList.remove("is-loading");
-      saveMessage.innerText = "Saved successfully!";
+      chrome.runtime.sendMessage({
+        type: "refdiff-settings"
+      }, function () {
+        saveButton.classList.remove("is-loading");
+        saveMessage.innerText = "Saved successfully!";
+      });
     });
   });
   loginButton.addEventListener("click", function () {

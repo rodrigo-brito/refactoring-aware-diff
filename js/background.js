@@ -3,49 +3,65 @@ import "firebase/firestore";
 import "firebase/auth";
 import initAnalytics from "./analytics";
 
+let app;
 let authUser;
+
+const initializeFirebase = (analytics) =>
+    chrome.storage.sync.get(
+        { projectID: "", domain: "", apiKey: "", analytics: "" },
+        (data) => {
+            const projectID = data.projectID || "refdiff";
+            app = firebase.initializeApp(
+                {
+                    projectId: projectID,
+                    authDomain: data.domain || "refdiff.firebaseapp.com",
+                    apiKey:
+                        data.apiKey ||
+                        "AIzaSyDIBgAmAXNdSZ_2jHMs9OxylexHitBnXIU",
+                },
+                projectID
+            );
+
+            if (analytics) {
+                initAnalytics(data.analytics || "UA-35546390-8");
+            }
+
+            initializeAuth();
+        }
+    );
 
 /**
  * Load settins and setup firebase
  */
-chrome.storage.sync.get(
-    {
-        projectID: "refdiff",
-        domain: "refdiff.firebaseapp.com",
-        apiKey: "AIzaSyDIBgAmAXNdSZ_2jHMs9OxylexHitBnXIU",
-        analytics: "UA-35546390-8",
-        email: "",
-        password: "",
-    },
-    (data) => {
-        firebase.initializeApp({
-            projectId: data.projectID || "refdiff",
-            authDomain: data.domain || "refdiff.firebaseapp.com",
-            apiKey: data.apiKey || "AIzaSyDIBgAmAXNdSZ_2jHMs9OxylexHitBnXIU",
-        });
 
-        initAnalytics(data.analytics || "UA-35546390-8");
-
-        if (data.email && data.password) {
-            firebase
-                .auth()
-                .signInWithEmailAndPassword(data.email, data.password)
-                .catch(console.error)
-                .then((data) => {
-                    authUser = data.user;
-                });
-        }
-
-        firebase.auth().onAuthStateChanged((user) => {
-            if (user) {
-                authUser = user;
+const initializeAuth = () => {
+    chrome.storage.sync.get(
+        { projectID: "", email: "", password: "" },
+        (data) => {
+            if (data.projectID && data.email && data.password) {
+                app.auth()
+                    .signInWithEmailAndPassword(data.email, data.password)
+                    .catch(console.error)
+                    .then((data) => {
+                        authUser = data.user;
+                    });
             }
-        });
-    }
-);
+
+            app.auth().onAuthStateChanged((user) => {
+                if (user) {
+                    authUser = user;
+                }
+            });
+        }
+    );
+};
 
 chrome.runtime.onMessage.addListener(function (message, _, sendResponse) {
     switch (message.type) {
+        case "refdiff-settings":
+            initializeFirebase(false);
+            sendResponse({ type: "success" });
+            break;
         case "refdiff-login-status":
             chrome.storage.sync.get(
                 {
@@ -53,14 +69,22 @@ chrome.runtime.onMessage.addListener(function (message, _, sendResponse) {
                     password: "",
                 },
                 (data) => {
-                    firebase
-                        .auth()
+                    if (!data.email || !data.password) {
+                        sendResponse({ type: "loggedOut" });
+                        return;
+                    }
+
+                    app.auth()
                         .signInWithEmailAndPassword(data.email, data.password)
                         .catch(function (error) {
                             sendResponse({ type: "loggedOut" });
                             console.log(error);
                         })
                         .then((data) => {
+                            if (!data || !data.user) {
+                                sendResponse({ type: "loggedOut" });
+                                return;
+                            }
                             sendResponse({ type: "loggedIn", user: data.user });
                             authUser = data.user;
                         });
@@ -68,54 +92,46 @@ chrome.runtime.onMessage.addListener(function (message, _, sendResponse) {
             );
             break;
         case "refdiff-login":
-            chrome.storage.sync.get(
-                {
-                    email: "",
-                    password: "",
-                },
-                (data) => {
-                    if (!data.email || !data.password) {
-                        sendResponse({
-                            type: "loggedOut",
-                            message: "Missing data!",
-                        });
-                        return;
-                    }
-
-                    firebase
-                        .auth()
-                        .signInWithEmailAndPassword(data.email, data.password)
-                        .catch(function (error) {
-                            if (error.code === "auth/wrong-password") {
-                                sendResponse({
-                                    type: "loggedOut",
-                                    message: "Wrong password.",
-                                });
-                            } else {
-                                sendResponse({
-                                    type: "loggedOut",
-                                    message: error.message,
-                                });
-                            }
-                        })
-                        .then((data) => {
-                            sendResponse({
-                                type: "loggedIn",
-                                message: data,
-                            });
-                            authUser = data.user;
-                            ga("send", "event", "login");
-                        });
+            chrome.storage.sync.get({ email: "", password: "" }, (data) => {
+                if (!data.email || !data.password) {
+                    sendResponse({
+                        type: "loggedOut",
+                        message: "Missing data!",
+                    });
+                    return;
                 }
-            );
+
+                app.auth()
+                    .signInWithEmailAndPassword(data.email, data.password)
+                    .catch(function (error) {
+                        if (error.code === "auth/wrong-password") {
+                            sendResponse({
+                                type: "loggedOut",
+                                message: "Wrong password.",
+                            });
+                        } else {
+                            sendResponse({
+                                type: "loggedOut",
+                                message: error.message,
+                            });
+                        }
+                    })
+                    .then((data) => {
+                        sendResponse({
+                            type: "loggedIn",
+                            message: data,
+                        });
+                        authUser = data.user;
+                        ga("send", "event", "login");
+                    });
+            });
             break;
         case "refdiff-logout":
             chrome.storage.sync.set({
                 email: "",
                 password: "",
             });
-            firebase
-                .auth()
+            app.auth()
                 .signOut()
                 .then(() => {
                     authUser = null;
@@ -168,8 +184,7 @@ chrome.runtime.onMessage.addListener(function (request, _, sendResponse) {
                 return;
             }
 
-            firebase
-                .firestore()
+            app.firestore()
                 .doc(docID)
                 .get()
                 .then((querySnapshot) => {
@@ -220,3 +235,6 @@ chrome.runtime.onMessage.addListener(function (request, _, sendResponse) {
     }
     return true;
 });
+
+// initialize firebase
+initializeFirebase(true);

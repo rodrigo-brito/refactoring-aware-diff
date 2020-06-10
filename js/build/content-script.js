@@ -6269,6 +6269,12 @@ var addRefactorings = function addRefactorings(fileMap, refactoring, side) {
           contentHTML = "<p><code>".concat(refactoring.before_local_name, "</code> renamed to <code>").concat(refactoring.after_local_name, "</code></p>");
           break;
 
+        case "CHANGE_SIGNATURE":
+          contentHTML = "<p>Signature changed.</p>";
+          contentHTML += "<p>Before: <code>".concat(refactoring.before_local_name, "</code></p>");
+          contentHTML += "<p>After: <code>".concat(refactoring.after_local_name, "</code></p>");
+          break;
+
         case "MOVE":
         case "INTERNAL_MOVE":
           contentHTML = "<p><code>".concat(refactoring.object_type.toLowerCase(), " ").concat(refactoring.before_local_name, "</code> moved.</p>");

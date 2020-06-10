@@ -21,8 +21,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 analytics: analytics.value,
             },
             () => {
-                saveButton.classList.remove("is-loading");
-                saveMessage.innerText = "Saved successfully!";
+                chrome.runtime.sendMessage({ type: "refdiff-settings" }, () => {
+                    saveButton.classList.remove("is-loading");
+                    saveMessage.innerText = "Saved successfully!";
+                });
             }
         );
     });

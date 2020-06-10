@@ -34419,52 +34419,89 @@ var _analytics = _interopRequireDefault(require("./analytics"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+var app;
 var authUser;
+
+var initializeFirebase = function initializeFirebase(analytics) {
+  return chrome.storage.sync.get({
+    projectID: "",
+    domain: "",
+    apiKey: "",
+    analytics: ""
+  }, function (data) {
+    var projectID = data.projectID || "refdiff";
+    app = _app.default.initializeApp({
+      projectId: projectID,
+      authDomain: data.domain || "refdiff.firebaseapp.com",
+      apiKey: data.apiKey || "AIzaSyDIBgAmAXNdSZ_2jHMs9OxylexHitBnXIU"
+    }, projectID);
+
+    if (analytics) {
+      (0, _analytics.default)(data.analytics || "UA-35546390-8");
+    }
+
+    initializeAuth();
+  });
+};
 /**
  * Load settins and setup firebase
  */
 
-chrome.storage.sync.get({
-  projectID: "refdiff",
-  domain: "refdiff.firebaseapp.com",
-  apiKey: "AIzaSyDIBgAmAXNdSZ_2jHMs9OxylexHitBnXIU",
-  analytics: "UA-35546390-8",
-  email: "",
-  password: ""
-}, function (data) {
-  _app.default.initializeApp({
-    projectId: data.projectID || "refdiff",
-    authDomain: data.domain || "refdiff.firebaseapp.com",
-    apiKey: data.apiKey || "AIzaSyDIBgAmAXNdSZ_2jHMs9OxylexHitBnXIU"
-  });
 
-  (0, _analytics.default)(data.analytics || "UA-35546390-8");
-
-  if (data.email && data.password) {
-    _app.default.auth().signInWithEmailAndPassword(data.email, data.password).catch(console.error).then(function (data) {
-      authUser = data.user;
-    });
-  }
-
-  _app.default.auth().onAuthStateChanged(function (user) {
-    if (user) {
-      authUser = user;
+var initializeAuth = function initializeAuth() {
+  chrome.storage.sync.get({
+    projectID: "",
+    email: "",
+    password: ""
+  }, function (data) {
+    if (data.projectID && data.email && data.password) {
+      app.auth().signInWithEmailAndPassword(data.email, data.password).catch(console.error).then(function (data) {
+        authUser = data.user;
+      });
     }
+
+    app.auth().onAuthStateChanged(function (user) {
+      if (user) {
+        authUser = user;
+      }
+    });
   });
-});
+};
+
 chrome.runtime.onMessage.addListener(function (message, _, sendResponse) {
   switch (message.type) {
+    case "refdiff-settings":
+      initializeFirebase(false);
+      sendResponse({
+        type: "success"
+      });
+      break;
+
     case "refdiff-login-status":
       chrome.storage.sync.get({
         email: "",
         password: ""
       }, function (data) {
-        _app.default.auth().signInWithEmailAndPassword(data.email, data.password).catch(function (error) {
+        if (!data.email || !data.password) {
+          sendResponse({
+            type: "loggedOut"
+          });
+          return;
+        }
+
+        app.auth().signInWithEmailAndPassword(data.email, data.password).catch(function (error) {
           sendResponse({
             type: "loggedOut"
           });
           console.log(error);
         }).then(function (data) {
+          if (!data || !data.user) {
+            sendResponse({
+              type: "loggedOut"
+            });
+            return;
+          }
+
           sendResponse({
             type: "loggedIn",
             user: data.user
@@ -34487,7 +34524,7 @@ chrome.runtime.onMessage.addListener(function (message, _, sendResponse) {
           return;
         }
 
-        _app.default.auth().signInWithEmailAndPassword(data.email, data.password).catch(function (error) {
+        app.auth().signInWithEmailAndPassword(data.email, data.password).catch(function (error) {
           if (error.code === "auth/wrong-password") {
             sendResponse({
               type: "loggedOut",
@@ -34515,8 +34552,7 @@ chrome.runtime.onMessage.addListener(function (message, _, sendResponse) {
         email: "",
         password: ""
       });
-
-      _app.default.auth().signOut().then(function () {
+      app.auth().signOut().then(function () {
         authUser = null;
         sendResponse({
           type: "loggedOut"
@@ -34524,7 +34560,6 @@ chrome.runtime.onMessage.addListener(function (message, _, sendResponse) {
       }).catch(function (error) {
         console.error(error);
       });
-
       ga("send", "event", "logout");
       break;
   }
@@ -34571,7 +34606,7 @@ chrome.runtime.onMessage.addListener(function (request, _, sendResponse) {
         return;
       }
 
-      _app.default.firestore().doc(docID).get().then(function (querySnapshot) {
+      app.firestore().doc(docID).get().then(function (querySnapshot) {
         return querySnapshot.data();
       }).then(function (data) {
         if (data) {
@@ -34593,7 +34628,6 @@ chrome.runtime.onMessage.addListener(function (request, _, sendResponse) {
         });
         sendResponse({});
       });
-
       break;
 
     case "event":
@@ -34612,5 +34646,7 @@ chrome.runtime.onMessage.addListener(function (request, _, sendResponse) {
   }
 
   return true;
-});
+}); // initialize firebase
+
+initializeFirebase(true);
 },{"firebase/app":"../node_modules/firebase/app/dist/index.cjs.js","firebase/firestore":"../node_modules/firebase/firestore/dist/index.esm.js","firebase/auth":"../node_modules/firebase/auth/dist/index.esm.js","./analytics":"analytics.js"}]},{},["background.js"], null)
