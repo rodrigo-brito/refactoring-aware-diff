@@ -38,6 +38,7 @@
 }
 
 .diff-refector-popup {
+    max-width: calc(100% - 30px);
     display: none;
     position: absolute;
     top: 0;

@@ -50,12 +50,13 @@ const updateFileMap = () => {
  * @param {String} category
  * @param {String} action
  */
-const sendEvent = (category, action, label, value) => {
+const sendEvent = (category, action, label, value, location) => {
     debug({
         category,
         action,
         label,
         value,
+        location,
     });
     try {
         chrome.runtime.sendMessage({
@@ -64,6 +65,8 @@ const sendEvent = (category, action, label, value) => {
             action: action,
             label: label,
             value: value,
+            location: location,
+            url: document.location.href.split("#diff")[0],
         });
     } catch (e) {
         console.error(e);
@@ -175,7 +178,8 @@ window.addEventListener("load", function () {
         link,
         buttonText,
         side,
-        diff
+        diff,
+        location
     ) {
         popup.querySelector(".refactor-content").innerHTML = contentHTML;
         popup.querySelector(".refactor-type").innerText = type;
@@ -204,8 +208,8 @@ window.addEventListener("load", function () {
             button.setAttribute("href", link);
             button.textContent = buttonText;
             button.addEventListener("click", () => {
-                sendEvent("click", "goto-side", side);
-                sendEvent("click", "goto-type", type);
+                sendEvent("click", "goto-side", side, 0, location);
+                sendEvent("click", "goto-type", type, 0, location);
             });
         }
 
@@ -224,8 +228,8 @@ window.addEventListener("load", function () {
         const lastTime = popup.getAttribute("data-time");
         if (lastTime) {
             const duration = Math.round((+new Date() - lastTime) / 100);
-            sendEvent("duration", "type", type, duration);
-            sendEvent("duration", "side", side, duration);
+            sendEvent("duration", "type", type, duration, location);
+            sendEvent("duration", "side", side, duration, location);
         }
 
         popup.style.setProperty("top", top + "px");
@@ -233,11 +237,12 @@ window.addEventListener("load", function () {
         popup.setAttribute("data-time", +new Date());
         popup.setAttribute("data-type", type);
         popup.setAttribute("data-side", side);
+        popup.setAttribute("data-location", location);
         popup.removeAttribute("data-left");
         popup.removeAttribute("data-right");
 
-        sendEvent("click", "type", type);
-        sendEvent("click", "side", side);
+        sendEvent("click", "type", type, 0, location);
+        sendEvent("click", "side", side, 0, location);
     };
 
     document.body.appendChild(popup);
@@ -246,14 +251,15 @@ window.addEventListener("load", function () {
         .addEventListener("click", () => {
             const type = popup.getAttribute("data-type");
             const side = popup.getAttribute("data-side");
+            const location = popup.getAttribute("data-location");
             const openTime = Number(popup.getAttribute("data-time"));
             const duration = Math.round((+new Date() - openTime) / 100);
 
             popup.removeAttribute("data-time");
             popup.style.setProperty("display", "none");
 
-            sendEvent("duration", "type", type, duration);
-            sendEvent("duration", "side", side, duration);
+            sendEvent("duration", "type", type, duration, location);
+            sendEvent("duration", "side", side, duration, location);
         });
 
     popup
@@ -261,6 +267,7 @@ window.addEventListener("load", function () {
         .addEventListener("click", () => {
             const left = popup.getAttribute("data-left");
             const right = popup.getAttribute("data-right");
+            const location = popup.getAttribute("data-location");
 
             if (left || right) {
                 popup.style.setProperty("left", left);
@@ -282,7 +289,13 @@ window.addEventListener("load", function () {
                 popup.style.setProperty("right", "15px");
             }
 
-            sendEvent("click", "maximize", popup.getAttribute("data-type"));
+            sendEvent(
+                "click",
+                "maximize",
+                popup.getAttribute("data-type"),
+                0,
+                location
+            );
         });
 });
 
@@ -327,143 +340,133 @@ const addRefactorings = (fileMap, refactoring, side) => {
     }
 
     // right side (addiction)
+    let selector = `${afterFile.link}R${refactoring.after_line_number}`;
     let lineNumber = refactoring.after_line_number;
     let buttonText = "Go to source";
     let baseFile = afterFile.ref;
     let link = `${beforeFile.link}L${refactoring.before_line_number}`;
+    let location = `${refactoring.after_file_name}:${refactoring.after_line_number}`;
     let selectorLineSufix = ".blob-num-addition";
 
     // left side (deletion)
     if (side === LEFT_SIDE) {
+        selector = `${beforeFile.link}L${refactoring.before_line_number}`;
         lineNumber = refactoring.before_line_number;
         buttonText = "Go to target";
         baseFile = beforeFile.ref;
         link = `${afterFile.link}R${refactoring.after_line_number}`;
+        location = location = `${refactoring.before_file_name}:${refactoring.before_line_number}`;
         selectorLineSufix = ".blob-num-deletion";
     }
 
-    const iterator = (selectorLineSufix) => {
-        return (line) => {
-            if (
-                !line.querySelector(
-                    `[data-line-number="${lineNumber}"]${selectorLineSufix}`
-                )
-            ) {
-                return false;
-            }
+    const iterator = (line) => {
+        if (!line.querySelector(selector)) {
+            return false;
+        }
 
-            // avoid duplication, skip if found an anotation
-            if (
-                line.querySelector(
-                    `[data-line-number="${lineNumber}"]${selectorLineSufix}~.blob-code .btn-refector`
-                )
-            ) {
-                return true;
-            }
-
-            let contentHTML;
-            let title = `${refactoring.type.replace("_", " ")} ${
-                refactoring.object_type
-            }`;
-            switch (refactoring.type) {
-                case "RENAME":
-                    contentHTML = `<p><code>${refactoring.before_local_name}</code> renamed to <code>${refactoring.after_local_name}</code></p>`;
-                    break;
-                case "CHANGE_SIGNATURE":
-                    contentHTML = "<p>Signature changed.</p>";
-                    contentHTML += `<p>Before: <code>${refactoring.before_local_name}</code></p>`;
-                    contentHTML += `<p>After: <code>${refactoring.after_local_name}</code></p>`;
-                    break;
-                case "MOVE":
-                case "INTERNAL_MOVE":
-                    contentHTML = `<p><code>${refactoring.object_type.toLowerCase()} ${
-                        refactoring.before_local_name
-                    }</code> moved.</p>`;
-                    contentHTML += `<p>Source: <code>${refactoring.before_file_name}:${refactoring.before_line_number}</code></p>`;
-                    contentHTML += `<p>Target: <code>${refactoring.after_file_name}:${refactoring.after_line_number}</code></p>`;
-                    break;
-                case "EXTRACT_SUPER":
-                    title = "EXTRACT " + refactoring.object_type.toUpperCase();
-                    contentHTML = `<p>${refactoring.object_type.toLowerCase()} <code> ${
-                        refactoring.after_local_name
-                    }</code> extracted from class <code>${
-                        refactoring.before_local_name
-                    }</code>.</p>`;
-                    contentHTML += `<p>Source: <code>${refactoring.before_file_name}:${refactoring.before_line_number}</code></p>`;
-                    contentHTML += `<p>Target: <code>${refactoring.after_file_name}:${refactoring.after_line_number}</code></p>`;
-                    break;
-                case "EXTRACT":
-                case "EXTRACT_MOVE":
-                    contentHTML = `<p>${refactoring.object_type.toLowerCase()} <code>${
-                        refactoring.after_local_name
-                    }</code> extracted from <code>${refactoring.object_type.toLowerCase()} ${
-                        refactoring.before_local_name
-                    }</code>.</p>`;
-                    contentHTML += `<p>Source: <code>${refactoring.before_file_name}:${refactoring.before_line_number}</code></p>`;
-                    contentHTML += `<p>Target: <code>${refactoring.after_file_name}:${refactoring.after_line_number}</code></p>`;
-                    break;
-                case "INLINE":
-                    contentHTML = `<p>Inline function <code>${refactoring.object_type.toLowerCase()} ${
-                        refactoring.before_local_name
-                    }</code> in <code> ${
-                        refactoring.after_local_name
-                    }</code>.</p>`;
-                    contentHTML += `<p>Source: <code>${refactoring.before_file_name}:${refactoring.before_line_number}</code></p>`;
-                    contentHTML += `<p>Target: <code>${refactoring.after_file_name}:${refactoring.after_line_number}</code></p>`;
-                    break;
-                default:
-                    refactoring.type = refactoring.type.replace("_", " ");
-                    title = `${refactoring.type} ${refactoring.object_type}`;
-                    contentHTML = `<p>${
-                        refactoring.type
-                    }: ${refactoring.object_type.toLowerCase()} <code>${
-                        refactoring.before_local_name
-                    }</code></p>`;
-                    contentHTML += `<p>Source: <code>${refactoring.before_file_name}:${refactoring.before_line_number}</code></p>`;
-                    contentHTML += `<p>Target: <code>${refactoring.after_file_name}:${refactoring.after_line_number}</code></p>`;
-            }
-
-            let button = document.createElement("button");
-            button.setAttribute(
-                "class",
-                `btn-refector ${
-                    side === LEFT_SIDE
-                        ? "btn-refactor-left"
-                        : "btn-refactor-right"
-                }`
-            );
-            button.addEventListener("click", () => {
-                popup.show(
-                    button,
-                    title,
-                    contentHTML,
-                    link,
-                    buttonText,
-                    side,
-                    diff
-                );
-            });
-            button.innerText = "R";
-            const sel = `[data-line-number="${lineNumber}"]${selectorLineSufix}~.blob-code`;
-            const sides = line.querySelectorAll(sel);
-            if (side == LEFT_SIDE) {
-                sides[0].appendChild(button);
-            } else {
-                sides[sides.length - 1].appendChild(button);
-            }
-
+        // avoid duplication, skip if found an anotation
+        if (line.querySelector(`${selector}~.blob-code .btn-refector`)) {
             return true;
-        };
+        }
+
+        let contentHTML;
+        let title = `${refactoring.type.replace("_", " ")} ${
+            refactoring.object_type
+        }`;
+        switch (refactoring.type) {
+            case "RENAME":
+                contentHTML = `<p><code>${refactoring.before_local_name}</code> renamed to <code>${refactoring.after_local_name}</code></p>`;
+                break;
+            case "CHANGE_SIGNATURE":
+                contentHTML = "<p>Signature changed.</p>";
+                contentHTML += `<p>Before: <code>${refactoring.before_local_name}</code></p>`;
+                contentHTML += `<p>After: <code>${refactoring.after_local_name}</code></p>`;
+                break;
+            case "MOVE":
+            case "INTERNAL_MOVE":
+                contentHTML = `<p><code>${refactoring.object_type.toLowerCase()} ${
+                    refactoring.before_local_name
+                }</code> moved.</p>`;
+                contentHTML += `<p>Source: <code>${refactoring.before_file_name}:${refactoring.before_line_number}</code></p>`;
+                contentHTML += `<p>Target: <code>${refactoring.after_file_name}:${refactoring.after_line_number}</code></p>`;
+                break;
+            case "EXTRACT_SUPER":
+                title = "EXTRACT " + refactoring.object_type.toUpperCase();
+                contentHTML = `<p>${refactoring.object_type.toLowerCase()} <code> ${
+                    refactoring.after_local_name
+                }</code> extracted from class <code>${
+                    refactoring.before_local_name
+                }</code>.</p>`;
+                contentHTML += `<p>Source: <code>${refactoring.before_file_name}:${refactoring.before_line_number}</code></p>`;
+                contentHTML += `<p>Target: <code>${refactoring.after_file_name}:${refactoring.after_line_number}</code></p>`;
+                break;
+            case "EXTRACT":
+            case "EXTRACT_MOVE":
+                contentHTML = `<p>${refactoring.object_type.toLowerCase()} <code>${
+                    refactoring.after_local_name
+                }</code> extracted from <code>${refactoring.object_type.toLowerCase()} ${
+                    refactoring.before_local_name
+                }</code>.</p>`;
+                contentHTML += `<p>Source: <code>${refactoring.before_file_name}:${refactoring.before_line_number}</code></p>`;
+                contentHTML += `<p>Target: <code>${refactoring.after_file_name}:${refactoring.after_line_number}</code></p>`;
+                break;
+            case "INLINE":
+                contentHTML = `<p>Inline function <code>${refactoring.object_type.toLowerCase()} ${
+                    refactoring.before_local_name
+                }</code> in <code> ${refactoring.after_local_name}</code>.</p>`;
+                contentHTML += `<p>Source: <code>${refactoring.before_file_name}:${refactoring.before_line_number}</code></p>`;
+                contentHTML += `<p>Target: <code>${refactoring.after_file_name}:${refactoring.after_line_number}</code></p>`;
+                break;
+            default:
+                refactoring.type = refactoring.type.replace("_", " ");
+                title = `${refactoring.type} ${refactoring.object_type}`;
+                contentHTML = `<p>${
+                    refactoring.type
+                }: ${refactoring.object_type.toLowerCase()} <code>${
+                    refactoring.before_local_name
+                }</code></p>`;
+                contentHTML += `<p>Source: <code>${refactoring.before_file_name}:${refactoring.before_line_number}</code></p>`;
+                contentHTML += `<p>Target: <code>${refactoring.after_file_name}:${refactoring.after_line_number}</code></p>`;
+        }
+
+        let button = document.createElement("button");
+        button.setAttribute(
+            "class",
+            `btn-refector ${
+                side === LEFT_SIDE ? "btn-refactor-left" : "btn-refactor-right"
+            }`
+        );
+
+        button.addEventListener("click", () => {
+            popup.show(
+                button,
+                title,
+                contentHTML,
+                link,
+                buttonText,
+                side,
+                diff,
+                location
+            );
+        });
+        button.innerText = "R";
+        const sel = `${selector}~.blob-code`;
+        const sides = line.querySelectorAll(sel);
+        if (side == LEFT_SIDE) {
+            sides[0].appendChild(button);
+        } else {
+            sides[sides.length - 1].appendChild(button);
+        }
+
+        return true;
     };
 
     const found = Array.from(baseFile.querySelectorAll(".diff-table tr")).some(
-        iterator(selectorLineSufix)
+        iterator
     );
-
-    // fallback for lines without marks of addiction / deletion
     if (!found) {
-        Array.from(baseFile.querySelectorAll(".diff-table tr")).some(
-            iterator(".blob-num-context")
-        );
+        debug({
+            selector,
+        });
     }
 };

@@ -225,12 +225,21 @@ chrome.runtime.onMessage.addListener(function (request, _, sendResponse) {
             // TODO: remove afeter research experiment
             // Write operations only authorized for specific users
             if (authUser) {
-                console.log({
-                    category: request.category,
-                    action: request.action,
-                    label: request.label,
-                    value: request.value,
-                });
+                app.firestore()
+                    .collection("event")
+                    .add({
+                        time: +new Date(),
+                        user: authUser.uid,
+                        category: request.category || "",
+                        action: request.action || "",
+                        label: request.label || "",
+                        value: request.value || 0,
+                        url: getDocIDFromURL(request.url) || "",
+                        location: request.location || "",
+                    })
+                    .catch(function (error) {
+                        console.error(error);
+                    });
             }
     }
     return true;

@@ -6010,12 +6010,13 @@ var updateFileMap = function updateFileMap() {
  */
 
 
-var sendEvent = function sendEvent(category, action, label, value) {
+var sendEvent = function sendEvent(category, action, label, value, location) {
   debug({
     category: category,
     action: action,
     label: label,
-    value: value
+    value: value,
+    location: location
   });
 
   try {
@@ -6024,7 +6025,9 @@ var sendEvent = function sendEvent(category, action, label, value) {
       category: category,
       action: action,
       label: label,
-      value: value
+      value: value,
+      location: location,
+      url: document.location.href.split("#diff")[0]
     });
   } catch (e) {
     console.error(e);
@@ -6122,7 +6125,7 @@ window.addEventListener("load", function () {
   popup.setAttribute("class", "diff-refector-popup");
   popup.innerHTML = "\n        <button class=\"diff-refector-action diff-refector-popup-close btn btn-sm btn-default\">x</button>\n        <button class=\"diff-refector-action diff-refector-popup-maximize btn btn-sm btn-default\">\u26F6</button>\n        <p><b class=\"refactor-type\"></b></p>\n        <div class=\"refactor-content\"></div>\n        <div class=\"refactor-diff-code\"></div>\n        <div class=\"d2h-wrapper refactor-diff-extration-wrapper\">\n            <div class=\"d2h-file-wrapper\">\n                <div class=\"d2h-file-header\">\n                    <span class=\"d2h-file-name-wrapper\">\n                        <svg aria-hidden=\"true\" class=\"d2h-icon\" height=\"16\" version=\"1.1\" viewBox=\"0 0 12 16\" width=\"12\">\n                            <path d=\"M6 5H2v-1h4v1zM2 8h7v-1H2v1z m0 2h7v-1H2v1z m0 2h7v-1H2v1z m10-7.5v9.5c0 0.55-0.45 1-1 1H1c-0.55 0-1-0.45-1-1V2c0-0.55 0.45-1 1-1h7.5l3.5 3.5z m-1 0.5L8 2H1v12h10V5z\"></path>\n                        </svg>\n                        <span class=\"d2h-file-name refactor-diff-extraction-name\"></span>\n                        <span class=\"d2h-tag d2h-moved d2h-extracted-tag\">EXTRACT</span>\n                    </span>\n                </div>\n                <div class=\"refactor-diff-extraction\"></div>\n            </div>\n        </div>\n        <a class=\"btn btn-sm btn-primary refactor-link\" href=\"#\">Go to source</a>\n    ";
 
-  popup.show = function (element, type, contentHTML, link, buttonText, side, diff) {
+  popup.show = function (element, type, contentHTML, link, buttonText, side, diff, location) {
     popup.querySelector(".refactor-content").innerHTML = contentHTML;
     popup.querySelector(".refactor-type").innerText = type;
     popup.querySelector(".refactor-diff-code").innerHTML = diff.code || "";
@@ -6140,8 +6143,8 @@ window.addEventListener("load", function () {
       button.setAttribute("href", link);
       button.textContent = buttonText;
       button.addEventListener("click", function () {
-        sendEvent("click", "goto-side", side);
-        sendEvent("click", "goto-type", type);
+        sendEvent("click", "goto-side", side, 0, location);
+        sendEvent("click", "goto-type", type, 0, location);
       });
     }
 
@@ -6158,8 +6161,8 @@ window.addEventListener("load", function () {
 
     if (lastTime) {
       var duration = Math.round((+new Date() - lastTime) / 100);
-      sendEvent("duration", "type", type, duration);
-      sendEvent("duration", "side", side, duration);
+      sendEvent("duration", "type", type, duration, location);
+      sendEvent("duration", "side", side, duration, location);
     }
 
     popup.style.setProperty("top", top + "px");
@@ -6167,26 +6170,29 @@ window.addEventListener("load", function () {
     popup.setAttribute("data-time", +new Date());
     popup.setAttribute("data-type", type);
     popup.setAttribute("data-side", side);
+    popup.setAttribute("data-location", location);
     popup.removeAttribute("data-left");
     popup.removeAttribute("data-right");
-    sendEvent("click", "type", type);
-    sendEvent("click", "side", side);
+    sendEvent("click", "type", type, 0, location);
+    sendEvent("click", "side", side, 0, location);
   };
 
   document.body.appendChild(popup);
   popup.querySelector(".diff-refector-popup-close").addEventListener("click", function () {
     var type = popup.getAttribute("data-type");
     var side = popup.getAttribute("data-side");
+    var location = popup.getAttribute("data-location");
     var openTime = Number(popup.getAttribute("data-time"));
     var duration = Math.round((+new Date() - openTime) / 100);
     popup.removeAttribute("data-time");
     popup.style.setProperty("display", "none");
-    sendEvent("duration", "type", type, duration);
-    sendEvent("duration", "side", side, duration);
+    sendEvent("duration", "type", type, duration, location);
+    sendEvent("duration", "side", side, duration, location);
   });
   popup.querySelector(".diff-refector-popup-maximize").addEventListener("click", function () {
     var left = popup.getAttribute("data-left");
     var right = popup.getAttribute("data-right");
+    var location = popup.getAttribute("data-location");
 
     if (left || right) {
       popup.style.setProperty("left", left);
@@ -6200,7 +6206,7 @@ window.addEventListener("load", function () {
       popup.style.setProperty("right", "15px");
     }
 
-    sendEvent("click", "maximize", popup.getAttribute("data-type"));
+    sendEvent("click", "maximize", popup.getAttribute("data-type"), 0, location);
   });
 });
 /**
@@ -6236,103 +6242,107 @@ var addRefactorings = function addRefactorings(fileMap, refactoring, side) {
   } // right side (addiction)
 
 
+  var selector = "".concat(afterFile.link, "R").concat(refactoring.after_line_number);
   var lineNumber = refactoring.after_line_number;
   var buttonText = "Go to source";
   var baseFile = afterFile.ref;
   var link = "".concat(beforeFile.link, "L").concat(refactoring.before_line_number);
+  var location = "".concat(refactoring.after_file_name, ":").concat(refactoring.after_line_number);
   var selectorLineSufix = ".blob-num-addition"; // left side (deletion)
 
   if (side === LEFT_SIDE) {
+    selector = "".concat(beforeFile.link, "L").concat(refactoring.before_line_number);
     lineNumber = refactoring.before_line_number;
     buttonText = "Go to target";
     baseFile = beforeFile.ref;
     link = "".concat(afterFile.link, "R").concat(refactoring.after_line_number);
+    location = location = "".concat(refactoring.before_file_name, ":").concat(refactoring.before_line_number);
     selectorLineSufix = ".blob-num-deletion";
   }
 
-  var iterator = function iterator(selectorLineSufix) {
-    return function (line) {
-      if (!line.querySelector("[data-line-number=\"".concat(lineNumber, "\"]").concat(selectorLineSufix))) {
-        return false;
-      } // avoid duplication, skip if found an anotation
+  var iterator = function iterator(line) {
+    if (!line.querySelector(selector)) {
+      return false;
+    } // avoid duplication, skip if found an anotation
 
 
-      if (line.querySelector("[data-line-number=\"".concat(lineNumber, "\"]").concat(selectorLineSufix, "~.blob-code .btn-refector"))) {
-        return true;
-      }
-
-      var contentHTML;
-      var title = "".concat(refactoring.type.replace("_", " "), " ").concat(refactoring.object_type);
-
-      switch (refactoring.type) {
-        case "RENAME":
-          contentHTML = "<p><code>".concat(refactoring.before_local_name, "</code> renamed to <code>").concat(refactoring.after_local_name, "</code></p>");
-          break;
-
-        case "CHANGE_SIGNATURE":
-          contentHTML = "<p>Signature changed.</p>";
-          contentHTML += "<p>Before: <code>".concat(refactoring.before_local_name, "</code></p>");
-          contentHTML += "<p>After: <code>".concat(refactoring.after_local_name, "</code></p>");
-          break;
-
-        case "MOVE":
-        case "INTERNAL_MOVE":
-          contentHTML = "<p><code>".concat(refactoring.object_type.toLowerCase(), " ").concat(refactoring.before_local_name, "</code> moved.</p>");
-          contentHTML += "<p>Source: <code>".concat(refactoring.before_file_name, ":").concat(refactoring.before_line_number, "</code></p>");
-          contentHTML += "<p>Target: <code>".concat(refactoring.after_file_name, ":").concat(refactoring.after_line_number, "</code></p>");
-          break;
-
-        case "EXTRACT_SUPER":
-          title = "EXTRACT " + refactoring.object_type.toUpperCase();
-          contentHTML = "<p>".concat(refactoring.object_type.toLowerCase(), " <code> ").concat(refactoring.after_local_name, "</code> extracted from class <code>").concat(refactoring.before_local_name, "</code>.</p>");
-          contentHTML += "<p>Source: <code>".concat(refactoring.before_file_name, ":").concat(refactoring.before_line_number, "</code></p>");
-          contentHTML += "<p>Target: <code>".concat(refactoring.after_file_name, ":").concat(refactoring.after_line_number, "</code></p>");
-          break;
-
-        case "EXTRACT":
-        case "EXTRACT_MOVE":
-          contentHTML = "<p>".concat(refactoring.object_type.toLowerCase(), " <code>").concat(refactoring.after_local_name, "</code> extracted from <code>").concat(refactoring.object_type.toLowerCase(), " ").concat(refactoring.before_local_name, "</code>.</p>");
-          contentHTML += "<p>Source: <code>".concat(refactoring.before_file_name, ":").concat(refactoring.before_line_number, "</code></p>");
-          contentHTML += "<p>Target: <code>".concat(refactoring.after_file_name, ":").concat(refactoring.after_line_number, "</code></p>");
-          break;
-
-        case "INLINE":
-          contentHTML = "<p>Inline function <code>".concat(refactoring.object_type.toLowerCase(), " ").concat(refactoring.before_local_name, "</code> in <code> ").concat(refactoring.after_local_name, "</code>.</p>");
-          contentHTML += "<p>Source: <code>".concat(refactoring.before_file_name, ":").concat(refactoring.before_line_number, "</code></p>");
-          contentHTML += "<p>Target: <code>".concat(refactoring.after_file_name, ":").concat(refactoring.after_line_number, "</code></p>");
-          break;
-
-        default:
-          refactoring.type = refactoring.type.replace("_", " ");
-          title = "".concat(refactoring.type, " ").concat(refactoring.object_type);
-          contentHTML = "<p>".concat(refactoring.type, ": ").concat(refactoring.object_type.toLowerCase(), " <code>").concat(refactoring.before_local_name, "</code></p>");
-          contentHTML += "<p>Source: <code>".concat(refactoring.before_file_name, ":").concat(refactoring.before_line_number, "</code></p>");
-          contentHTML += "<p>Target: <code>".concat(refactoring.after_file_name, ":").concat(refactoring.after_line_number, "</code></p>");
-      }
-
-      var button = document.createElement("button");
-      button.setAttribute("class", "btn-refector ".concat(side === LEFT_SIDE ? "btn-refactor-left" : "btn-refactor-right"));
-      button.addEventListener("click", function () {
-        popup.show(button, title, contentHTML, link, buttonText, side, diff);
-      });
-      button.innerText = "R";
-      var sel = "[data-line-number=\"".concat(lineNumber, "\"]").concat(selectorLineSufix, "~.blob-code");
-      var sides = line.querySelectorAll(sel);
-
-      if (side == LEFT_SIDE) {
-        sides[0].appendChild(button);
-      } else {
-        sides[sides.length - 1].appendChild(button);
-      }
-
+    if (line.querySelector("".concat(selector, "~.blob-code .btn-refector"))) {
       return true;
-    };
+    }
+
+    var contentHTML;
+    var title = "".concat(refactoring.type.replace("_", " "), " ").concat(refactoring.object_type);
+
+    switch (refactoring.type) {
+      case "RENAME":
+        contentHTML = "<p><code>".concat(refactoring.before_local_name, "</code> renamed to <code>").concat(refactoring.after_local_name, "</code></p>");
+        break;
+
+      case "CHANGE_SIGNATURE":
+        contentHTML = "<p>Signature changed.</p>";
+        contentHTML += "<p>Before: <code>".concat(refactoring.before_local_name, "</code></p>");
+        contentHTML += "<p>After: <code>".concat(refactoring.after_local_name, "</code></p>");
+        break;
+
+      case "MOVE":
+      case "INTERNAL_MOVE":
+        contentHTML = "<p><code>".concat(refactoring.object_type.toLowerCase(), " ").concat(refactoring.before_local_name, "</code> moved.</p>");
+        contentHTML += "<p>Source: <code>".concat(refactoring.before_file_name, ":").concat(refactoring.before_line_number, "</code></p>");
+        contentHTML += "<p>Target: <code>".concat(refactoring.after_file_name, ":").concat(refactoring.after_line_number, "</code></p>");
+        break;
+
+      case "EXTRACT_SUPER":
+        title = "EXTRACT " + refactoring.object_type.toUpperCase();
+        contentHTML = "<p>".concat(refactoring.object_type.toLowerCase(), " <code> ").concat(refactoring.after_local_name, "</code> extracted from class <code>").concat(refactoring.before_local_name, "</code>.</p>");
+        contentHTML += "<p>Source: <code>".concat(refactoring.before_file_name, ":").concat(refactoring.before_line_number, "</code></p>");
+        contentHTML += "<p>Target: <code>".concat(refactoring.after_file_name, ":").concat(refactoring.after_line_number, "</code></p>");
+        break;
+
+      case "EXTRACT":
+      case "EXTRACT_MOVE":
+        contentHTML = "<p>".concat(refactoring.object_type.toLowerCase(), " <code>").concat(refactoring.after_local_name, "</code> extracted from <code>").concat(refactoring.object_type.toLowerCase(), " ").concat(refactoring.before_local_name, "</code>.</p>");
+        contentHTML += "<p>Source: <code>".concat(refactoring.before_file_name, ":").concat(refactoring.before_line_number, "</code></p>");
+        contentHTML += "<p>Target: <code>".concat(refactoring.after_file_name, ":").concat(refactoring.after_line_number, "</code></p>");
+        break;
+
+      case "INLINE":
+        contentHTML = "<p>Inline function <code>".concat(refactoring.object_type.toLowerCase(), " ").concat(refactoring.before_local_name, "</code> in <code> ").concat(refactoring.after_local_name, "</code>.</p>");
+        contentHTML += "<p>Source: <code>".concat(refactoring.before_file_name, ":").concat(refactoring.before_line_number, "</code></p>");
+        contentHTML += "<p>Target: <code>".concat(refactoring.after_file_name, ":").concat(refactoring.after_line_number, "</code></p>");
+        break;
+
+      default:
+        refactoring.type = refactoring.type.replace("_", " ");
+        title = "".concat(refactoring.type, " ").concat(refactoring.object_type);
+        contentHTML = "<p>".concat(refactoring.type, ": ").concat(refactoring.object_type.toLowerCase(), " <code>").concat(refactoring.before_local_name, "</code></p>");
+        contentHTML += "<p>Source: <code>".concat(refactoring.before_file_name, ":").concat(refactoring.before_line_number, "</code></p>");
+        contentHTML += "<p>Target: <code>".concat(refactoring.after_file_name, ":").concat(refactoring.after_line_number, "</code></p>");
+    }
+
+    var button = document.createElement("button");
+    button.setAttribute("class", "btn-refector ".concat(side === LEFT_SIDE ? "btn-refactor-left" : "btn-refactor-right"));
+    button.addEventListener("click", function () {
+      popup.show(button, title, contentHTML, link, buttonText, side, diff, location);
+    });
+    button.innerText = "R";
+    var sel = "".concat(selector, "~.blob-code");
+    var sides = line.querySelectorAll(sel);
+
+    if (side == LEFT_SIDE) {
+      sides[0].appendChild(button);
+    } else {
+      sides[sides.length - 1].appendChild(button);
+    }
+
+    return true;
   };
 
-  var found = Array.from(baseFile.querySelectorAll(".diff-table tr")).some(iterator(selectorLineSufix)); // fallback for lines without marks of addiction / deletion
+  var found = Array.from(baseFile.querySelectorAll(".diff-table tr")).some(iterator);
 
   if (!found) {
-    Array.from(baseFile.querySelectorAll(".diff-table tr")).some(iterator(".blob-num-context"));
+    debug({
+      selector: selector
+    });
   }
 };
 },{"diff2html":"../node_modules/diff2html/lib-esm/diff2html.js","prismjs":"../node_modules/prismjs/prism.js","prismjs/components/prism-go":"../node_modules/prismjs/components/prism-go.js","prismjs/components/prism-java":"../node_modules/prismjs/components/prism-java.js","prismjs/components/prism-c":"../node_modules/prismjs/components/prism-c.js","prismjs/components/prism-javascript":"../node_modules/prismjs/components/prism-javascript.js","prismjs/components/prism-clike":"../node_modules/prismjs/components/prism-clike.js"}]},{},["content-script.js"], null)
