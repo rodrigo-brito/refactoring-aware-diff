@@ -1953,9 +1953,9 @@ destroy@~1.0.4:
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/destroy/-/destroy-1.0.4.tgz#978857442c44749e4206613e37946205826abd80"
 
-diff2html@^3.1.8:
-  version "3.1.8"
-  resolved "https://registry.yarnpkg.com/diff2html/-/diff2html-3.1.8.tgz#b0cf49734b17847940c6635646fe3cecb55a546d"
+diff2html@^3.1.9:
+  version "3.1.9"
+  resolved "https://registry.yarnpkg.com/diff2html/-/diff2html-3.1.9.tgz#c7b3046dcd0db0bc5ad4c99fedec5e39948b5660"
   dependencies:
     diff "4.0.2"
     hogan.js "3.0.2"
