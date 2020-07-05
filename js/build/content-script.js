@@ -6033,6 +6033,47 @@ var sendEvent = function sendEvent(category, action, label, value, location) {
     console.error(e);
   }
 };
+
+var loadRefactoringsIndex = function loadRefactoringsIndex(refactorings) {
+  var list = document.querySelector(".raid-index");
+
+  if (!list) {
+    list = document.createElement("div");
+    list.classList.add("float-right", "raid-index");
+    document.querySelector(".diffbar").append(list);
+  }
+
+  var links = refactorings.map(function (refactoring) {
+    var afterFile = fileMap[refactoring.after_file_name];
+
+    if (!afterFile) {
+      return;
+    }
+
+    var link = "".concat(afterFile.link, "R").concat(refactoring.after_line_number);
+
+    if (!document.querySelector(link)) {
+      link = afterFile.link;
+    }
+
+    return "<a class=\"SelectMenu-item\" role=\"menuitem\" href=\"".concat(link, "\">").concat(refactoring.after_file_name, ":").concat(refactoring.after_line_number, " (").concat(refactoring.type, ")</a>");
+  });
+  list.innerHTML = "\n    <div id=\"raid-pr-index\" class=\"d-flex flex-justify-end position-relative pr-review-tools\">\n        <details class=\"details-reset details-overlay\">\n            <summary class=\"btn btn-sm\" aria-haspopup=\"true\">\n            ".concat(refactorings.length, " Refactorings\n            </summary>\n            <div class=\"SelectMenu right-0\">\n            <div class=\"SelectMenu-modal\">\n                <div class=\"SelectMenu-list\">\n                    ").concat(links.join(""), "\n                </div>\n            </div>\n            </div>\n        </details>\n    </div>");
+  list.querySelector(".SelectMenu-list").addEventListener("click", function () {
+    list.querySelector("details").removeAttribute("open");
+    sendEvent("click", "index");
+  });
+};
+
+var missingRefactorings = [];
+
+var processRefactorings = function processRefactorings(refactorings) {
+  missingRefactorings = refactorings.filter(function (refactoring) {
+    var okLeft = addRefactorings(fileMap, refactoring, LEFT_SIDE);
+    var okRight = addRefactorings(fileMap, refactoring, RIGHT_SIDE);
+    return !okLeft || !okRight;
+  });
+};
 /**
  * Message receiver to handle data
  */
@@ -6049,17 +6090,16 @@ chrome.runtime.onMessage.addListener(function (request) {
 
       if (!request.data || !request.data.refactorings) {
         return;
-      }
+      } // load refactings index
 
+
+      loadRefactoringsIndex(request.data.refactorings);
       debug("Loading: " + request.data.refactorings.length + " refactorings");
-      request.data.refactorings.forEach(function (refactoring) {
-        addRefactorings(fileMap, refactoring, LEFT_SIDE);
-        addRefactorings(fileMap, refactoring, RIGHT_SIDE);
-      });
+      processRefactorings(request.data.refactorings);
   }
 });
 var debounceObserver = null;
-var debounceObserverTimeout = 100;
+var debounceObserverTimeout = 500;
 /**
  * Initialize observers to trigger plugin update
  * @param {Array} selectors list of CSS selectors to observe
@@ -6078,8 +6118,14 @@ var initObserver = function initObserver(selectors) {
         if (mutation.type === "childList") {
           clearTimeout(debounceObserver);
           debounceObserver = setTimeout(function () {
-            if (!updateFileMap() && document.querySelector(".btn-refector")) {
+            if (!updateFileMap() && (document.querySelector(".btn-refector") || document.getElementById("raid-pr-index"))) {
               debug("Files without change");
+
+              if (missingRefactorings && missingRefactorings.length > 0) {
+                debug("missing " + missingRefactorings.length + "files");
+                processRefactorings(missingRefactorings);
+              }
+
               return;
             } // request data from firebase
 
@@ -6177,7 +6223,6 @@ window.addEventListener("load", function () {
     sendEvent("click", "side", side, 0, location);
   };
 
-  document.body.appendChild(popup);
   popup.querySelector(".diff-refector-popup-close").addEventListener("click", function () {
     var type = popup.getAttribute("data-type");
     var side = popup.getAttribute("data-side");
@@ -6208,6 +6253,12 @@ window.addEventListener("load", function () {
 
     sendEvent("click", "maximize", popup.getAttribute("data-type"), 0, location);
   });
+  document.body.appendChild(popup); // request data from firebase
+
+  chrome.runtime.sendMessage({
+    command: "refdiff-refactoring",
+    url: document.location.href.split("#diff")[0]
+  });
 });
 /**
  *
@@ -6217,8 +6268,8 @@ window.addEventListener("load", function () {
  */
 
 var addRefactorings = function addRefactorings(fileMap, refactoring, side) {
-  debug(side);
-  debug(refactoring);
+  // debug(side);
+  // debug(refactoring);
   var diff = {};
 
   if (refactoring.diff) {
@@ -6238,111 +6289,94 @@ var addRefactorings = function addRefactorings(fileMap, refactoring, side) {
   var afterFile = fileMap[refactoring.after_file_name];
 
   if (!beforeFile || !afterFile) {
-    return;
+    return false;
   } // right side (addiction)
 
 
   var selector = "".concat(afterFile.link, "R").concat(refactoring.after_line_number);
-  var lineNumber = refactoring.after_line_number;
-  var buttonText = "Go to source";
-  var baseFile = afterFile.ref;
+  var buttonText = "Go to source"; // let baseFile = afterFile.ref;
+
   var link = "".concat(beforeFile.link, "L").concat(refactoring.before_line_number);
-  var location = "".concat(refactoring.after_file_name, ":").concat(refactoring.after_line_number);
-  var selectorLineSufix = ".blob-num-addition"; // left side (deletion)
+  var location = "".concat(refactoring.after_file_name, ":").concat(refactoring.after_line_number); // left side (deletion)
 
   if (side === LEFT_SIDE) {
     selector = "".concat(beforeFile.link, "L").concat(refactoring.before_line_number);
-    lineNumber = refactoring.before_line_number;
-    buttonText = "Go to target";
-    baseFile = beforeFile.ref;
+    buttonText = "Go to target"; // baseFile = beforeFile.ref;
+
     link = "".concat(afterFile.link, "R").concat(refactoring.after_line_number);
     location = location = "".concat(refactoring.before_file_name, ":").concat(refactoring.before_line_number);
-    selectorLineSufix = ".blob-num-deletion";
   }
 
-  var iterator = function iterator(line) {
-    if (!line.querySelector(selector)) {
-      return false;
-    } // avoid duplication, skip if found an anotation
+  if (!document.querySelector(selector)) {
+    return false;
+  }
 
-
-    if (line.querySelector("".concat(selector, "~.blob-code .btn-refector"))) {
-      return true;
-    }
-
-    var contentHTML;
-    var title = "".concat(refactoring.type.replace("_", " "), " ").concat(refactoring.object_type);
-
-    switch (refactoring.type) {
-      case "RENAME":
-        contentHTML = "<p><code>".concat(refactoring.before_local_name, "</code> renamed to <code>").concat(refactoring.after_local_name, "</code></p>");
-        break;
-
-      case "CHANGE_SIGNATURE":
-        contentHTML = "<p>Signature changed.</p>";
-        contentHTML += "<p>Before: <code>".concat(refactoring.before_local_name, "</code></p>");
-        contentHTML += "<p>After: <code>".concat(refactoring.after_local_name, "</code></p>");
-        break;
-
-      case "MOVE":
-      case "INTERNAL_MOVE":
-        contentHTML = "<p><code>".concat(refactoring.object_type.toLowerCase(), " ").concat(refactoring.before_local_name, "</code> moved.</p>");
-        contentHTML += "<p>Source: <code>".concat(refactoring.before_file_name, ":").concat(refactoring.before_line_number, "</code></p>");
-        contentHTML += "<p>Target: <code>".concat(refactoring.after_file_name, ":").concat(refactoring.after_line_number, "</code></p>");
-        break;
-
-      case "EXTRACT_SUPER":
-        title = "EXTRACT " + refactoring.object_type.toUpperCase();
-        contentHTML = "<p>".concat(refactoring.object_type.toLowerCase(), " <code> ").concat(refactoring.after_local_name, "</code> extracted from class <code>").concat(refactoring.before_local_name, "</code>.</p>");
-        contentHTML += "<p>Source: <code>".concat(refactoring.before_file_name, ":").concat(refactoring.before_line_number, "</code></p>");
-        contentHTML += "<p>Target: <code>".concat(refactoring.after_file_name, ":").concat(refactoring.after_line_number, "</code></p>");
-        break;
-
-      case "EXTRACT":
-      case "EXTRACT_MOVE":
-        contentHTML = "<p>".concat(refactoring.object_type.toLowerCase(), " <code>").concat(refactoring.after_local_name, "</code> extracted from <code>").concat(refactoring.object_type.toLowerCase(), " ").concat(refactoring.before_local_name, "</code>.</p>");
-        contentHTML += "<p>Source: <code>".concat(refactoring.before_file_name, ":").concat(refactoring.before_line_number, "</code></p>");
-        contentHTML += "<p>Target: <code>".concat(refactoring.after_file_name, ":").concat(refactoring.after_line_number, "</code></p>");
-        break;
-
-      case "INLINE":
-        contentHTML = "<p>Inline function <code>".concat(refactoring.object_type.toLowerCase(), " ").concat(refactoring.before_local_name, "</code> in <code> ").concat(refactoring.after_local_name, "</code>.</p>");
-        contentHTML += "<p>Source: <code>".concat(refactoring.before_file_name, ":").concat(refactoring.before_line_number, "</code></p>");
-        contentHTML += "<p>Target: <code>".concat(refactoring.after_file_name, ":").concat(refactoring.after_line_number, "</code></p>");
-        break;
-
-      default:
-        refactoring.type = refactoring.type.replace("_", " ");
-        title = "".concat(refactoring.type, " ").concat(refactoring.object_type);
-        contentHTML = "<p>".concat(refactoring.type, ": ").concat(refactoring.object_type.toLowerCase(), " <code>").concat(refactoring.before_local_name, "</code></p>");
-        contentHTML += "<p>Source: <code>".concat(refactoring.before_file_name, ":").concat(refactoring.before_line_number, "</code></p>");
-        contentHTML += "<p>Target: <code>".concat(refactoring.after_file_name, ":").concat(refactoring.after_line_number, "</code></p>");
-    }
-
-    var button = document.createElement("button");
-    button.setAttribute("class", "btn-refector ".concat(side === LEFT_SIDE ? "btn-refactor-left" : "btn-refactor-right"));
-    button.addEventListener("click", function () {
-      popup.show(button, title, contentHTML, link, buttonText, side, diff, location);
-    });
-    button.innerText = "R";
-    var sel = "".concat(selector, "~.blob-code");
-    var sides = line.querySelectorAll(sel);
-
-    if (side == LEFT_SIDE) {
-      sides[0].appendChild(button);
-    } else {
-      sides[sides.length - 1].appendChild(button);
-    }
-
+  if (document.querySelector("".concat(selector, "~.blob-code .btn-refector"))) {
     return true;
-  };
-
-  var found = Array.from(baseFile.querySelectorAll(".diff-table tr")).some(iterator);
-
-  if (!found) {
-    debug({
-      selector: selector
-    });
   }
+
+  var contentHTML;
+  var title = "".concat(refactoring.type.replace("_", " "), " ").concat(refactoring.object_type);
+
+  switch (refactoring.type) {
+    case "RENAME":
+      contentHTML = "<p><code>".concat(refactoring.before_local_name, "</code> renamed to <code>").concat(refactoring.after_local_name, "</code></p>");
+      break;
+
+    case "CHANGE_SIGNATURE":
+      contentHTML = "<p>Signature changed.</p>";
+      contentHTML += "<p>Before: <code>".concat(refactoring.before_local_name, "</code></p>");
+      contentHTML += "<p>After: <code>".concat(refactoring.after_local_name, "</code></p>");
+      break;
+
+    case "MOVE":
+    case "INTERNAL_MOVE":
+      contentHTML = "<p><code>".concat(refactoring.object_type.toLowerCase(), " ").concat(refactoring.before_local_name, "</code> moved.</p>");
+      contentHTML += "<p>Source: <code>".concat(refactoring.before_file_name, ":").concat(refactoring.before_line_number, "</code></p>");
+      contentHTML += "<p>Target: <code>".concat(refactoring.after_file_name, ":").concat(refactoring.after_line_number, "</code></p>");
+      break;
+
+    case "EXTRACT_SUPER":
+      title = "EXTRACT " + refactoring.object_type.toUpperCase();
+      contentHTML = "<p>".concat(refactoring.object_type.toLowerCase(), " <code> ").concat(refactoring.after_local_name, "</code> extracted from class <code>").concat(refactoring.before_local_name, "</code>.</p>");
+      contentHTML += "<p>Source: <code>".concat(refactoring.before_file_name, ":").concat(refactoring.before_line_number, "</code></p>");
+      contentHTML += "<p>Target: <code>".concat(refactoring.after_file_name, ":").concat(refactoring.after_line_number, "</code></p>");
+      break;
+
+    case "EXTRACT":
+    case "EXTRACT_MOVE":
+      contentHTML = "<p>".concat(refactoring.object_type.toLowerCase(), " <code>").concat(refactoring.after_local_name, "</code> extracted from <code>").concat(refactoring.object_type.toLowerCase(), " ").concat(refactoring.before_local_name, "</code>.</p>");
+      contentHTML += "<p>Source: <code>".concat(refactoring.before_file_name, ":").concat(refactoring.before_line_number, "</code></p>");
+      contentHTML += "<p>Target: <code>".concat(refactoring.after_file_name, ":").concat(refactoring.after_line_number, "</code></p>");
+      break;
+
+    case "INLINE":
+      contentHTML = "<p>Inline function <code>".concat(refactoring.object_type.toLowerCase(), " ").concat(refactoring.before_local_name, "</code> in <code> ").concat(refactoring.after_local_name, "</code>.</p>");
+      contentHTML += "<p>Source: <code>".concat(refactoring.before_file_name, ":").concat(refactoring.before_line_number, "</code></p>");
+      contentHTML += "<p>Target: <code>".concat(refactoring.after_file_name, ":").concat(refactoring.after_line_number, "</code></p>");
+      break;
+
+    default:
+      refactoring.type = refactoring.type.replace("_", " ");
+      title = "".concat(refactoring.type, " ").concat(refactoring.object_type);
+      contentHTML = "<p>".concat(refactoring.type, ": ").concat(refactoring.object_type.toLowerCase(), " <code>").concat(refactoring.before_local_name, "</code></p>");
+      contentHTML += "<p>Source: <code>".concat(refactoring.before_file_name, ":").concat(refactoring.before_line_number, "</code></p>");
+      contentHTML += "<p>Target: <code>".concat(refactoring.after_file_name, ":").concat(refactoring.after_line_number, "</code></p>");
+  }
+
+  var button = document.createElement("button");
+  button.setAttribute("class", "btn-refector ".concat(side === LEFT_SIDE ? "btn-refactor-left" : "btn-refactor-right"));
+  button.addEventListener("click", function () {
+    popup.show(button, title, contentHTML, link, buttonText, side, diff, location);
+  });
+  button.innerText = "R";
+  var line = document.querySelector("".concat(selector, "~.blob-code"));
+
+  if (line) {
+    line.appendChild(button);
+    return true;
+  }
+
+  return false;
 };
 },{"diff2html":"../node_modules/diff2html/lib-esm/diff2html.js","prismjs":"../node_modules/prismjs/prism.js","prismjs/components/prism-go":"../node_modules/prismjs/components/prism-go.js","prismjs/components/prism-java":"../node_modules/prismjs/components/prism-java.js","prismjs/components/prism-c":"../node_modules/prismjs/components/prism-c.js","prismjs/components/prism-javascript":"../node_modules/prismjs/components/prism-javascript.js","prismjs/components/prism-clike":"../node_modules/prismjs/components/prism-clike.js"}]},{},["content-script.js"], null)

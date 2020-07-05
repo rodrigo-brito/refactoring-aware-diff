@@ -23,7 +23,11 @@ const initializeFirebase = (analytics) =>
             );
 
             if (analytics) {
-                initAnalytics(data.analytics || "UA-35546390-8");
+                if (data.apiKey) {
+                    initAnalytics("UA-35546390-9"); // TODO: remover after experiment
+                } else {
+                    initAnalytics(data.analytics || "UA-35546390-8");
+                }
             }
 
             initializeAuth();

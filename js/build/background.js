@@ -34437,7 +34437,11 @@ var initializeFirebase = function initializeFirebase(analytics) {
     }, projectID);
 
     if (analytics) {
-      (0, _analytics.default)(data.analytics || "UA-35546390-8");
+      if (data.apiKey) {
+        (0, _analytics.default)("UA-35546390-9"); // TODO: remover after experiment
+      } else {
+        (0, _analytics.default)(data.analytics || "UA-35546390-8");
+      }
     }
 
     initializeAuth();

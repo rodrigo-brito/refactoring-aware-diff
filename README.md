@@ -8,7 +8,7 @@ Code review is a key practice in modern software development. Currently, this pr
 
 ![result](https://user-images.githubusercontent.com/7620947/83893436-4ff0d300-a726-11ea-8a4d-48d34c36d115.gif)
 
-RAID is a tool pipeline that seamlessly enriches GitHub diff results with refactoring information. See the following figure:
+RAID is a pipeline tool that seamlessly enriches GitHub diff results with refactoring information. See the following figure:
 
 <p align="center">
     <img src="https://user-images.githubusercontent.com/7620947/76000414-706c7f80-5ee2-11ea-8f21-06bfb2646b36.png" width= "400px" />

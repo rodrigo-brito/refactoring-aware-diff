@@ -1,6 +1,6 @@
 {
     "name": "RAID: Refactoring-aware and Intelligent Diffs",
-    "version": "0.0.17",
+    "version": "0.0.21",
     "manifest_version": 2,
     "description": "Adds refactoring annotations to GitHub diff",
     "homepage_url": "https://github.com/rodrigo-brito/refactoring-aware-diff",
