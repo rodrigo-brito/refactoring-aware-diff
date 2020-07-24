@@ -16,7 +16,7 @@
     "dependencies": {
         "diff2html": "^3.1.8",
         "prismjs": "^1.20.0",
-        "firebase": "^7.15.4",
+        "firebase": "^7.17.1",
         "whatwg-fetch": "^3.0.0"
     }
 }
