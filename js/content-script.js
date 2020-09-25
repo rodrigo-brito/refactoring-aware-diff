@@ -30,17 +30,23 @@ const updateFileMap = () => {
     let changed = false;
     document.querySelectorAll(".file").forEach((file) => {
         const header = file.querySelector(".file-info > a");
+        if (!header) {
+            return;
+        }
+
         const fileName = header.textContent;
         const link = header.getAttribute("href");
 
-        if (!fileMap[fileName]) {
-            changed = true;
-        }
+        fileName.split(" → ").forEach((name) => {
+            if (!fileMap[name]) {
+                changed = true;
+            }
 
-        fileMap[fileName] = {
-            ref: file,
-            link: link,
-        };
+            fileMap[name] = {
+                ref: file,
+                link: link,
+            };
+        });
     });
     return changed;
 };
@@ -74,11 +80,16 @@ const sendEvent = (category, action, label, value, location) => {
 };
 
 const loadRefactoringsIndex = (refactorings) => {
+    const diffBar = document.querySelector(".diffbar .pr-review-tools");
+    if (!diffBar) {
+        return;
+    }
+
     let list = document.querySelector(".raid-index");
     if (!list) {
         list = document.createElement("div");
-        list.classList.add("float-right", "raid-index");
-        document.querySelector(".diffbar").append(list);
+        list.classList.add("diffbar-item", "raid-index");
+        diffBar.insertBefore(list, diffBar.firstChild);
     }
 
     const links = refactorings.map((refactoring) => {
@@ -98,7 +109,7 @@ const loadRefactoringsIndex = (refactorings) => {
     list.innerHTML = `
     <div id="raid-pr-index" class="d-flex flex-justify-end position-relative pr-review-tools">
         <details class="details-reset details-overlay">
-            <summary class="btn btn-sm" aria-haspopup="true">
+            <summary class="btn btn-sm bg-orange text-white" aria-haspopup="true">
             ${refactorings.length} Refactorings
             </summary>
             <div class="SelectMenu right-0">
@@ -125,6 +136,7 @@ const processRefactorings = (refactorings) => {
         const okRight = addRefactorings(fileMap, refactoring, RIGHT_SIDE);
         return !okLeft || !okRight;
     });
+    return refactorings.length !== missingRefactorings.length;
 };
 
 /**
@@ -144,13 +156,16 @@ chrome.runtime.onMessage.addListener(function (request) {
             }
 
             // load refactings index
-            loadRefactoringsIndex(request.data.refactorings);
+            // loadRefactoringsIndex(request.data.refactorings);
 
             debug(
                 "Loading: " + request.data.refactorings.length + " refactorings"
             );
 
-            processRefactorings(request.data.refactorings);
+            if (processRefactorings(request.data.refactorings)) {
+                // load refactings index
+                loadRefactoringsIndex(request.data.refactorings);
+            }
     }
 });
 
@@ -299,7 +314,7 @@ window.addEventListener("load", function () {
         }
 
         popup.style.setProperty("top", top + "px");
-        popup.style.setProperty("left", Math.max(15, left - offset) + "px");
+        popup.style.setProperty("left", Math.max(32, left - offset) + "px");
         popup.setAttribute("data-time", +new Date());
         popup.setAttribute("data-type", type);
         popup.setAttribute("data-side", side);
@@ -350,8 +365,8 @@ window.addEventListener("load", function () {
                     popup.style.getPropertyValue("right")
                 );
 
-                popup.style.setProperty("left", "15px");
-                popup.style.setProperty("right", "15px");
+                popup.style.setProperty("left", "32px");
+                popup.style.setProperty("right", "32px");
             }
 
             sendEvent(

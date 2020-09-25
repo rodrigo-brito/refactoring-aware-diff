@@ -5989,17 +5989,23 @@ var updateFileMap = function updateFileMap() {
   var changed = false;
   document.querySelectorAll(".file").forEach(function (file) {
     var header = file.querySelector(".file-info > a");
-    var fileName = header.textContent;
-    var link = header.getAttribute("href");
 
-    if (!fileMap[fileName]) {
-      changed = true;
+    if (!header) {
+      return;
     }
 
-    fileMap[fileName] = {
-      ref: file,
-      link: link
-    };
+    var fileName = header.textContent;
+    var link = header.getAttribute("href");
+    fileName.split(" → ").forEach(function (name) {
+      if (!fileMap[name]) {
+        changed = true;
+      }
+
+      fileMap[name] = {
+        ref: file,
+        link: link
+      };
+    });
   });
   return changed;
 };
@@ -6035,12 +6041,18 @@ var sendEvent = function sendEvent(category, action, label, value, location) {
 };
 
 var loadRefactoringsIndex = function loadRefactoringsIndex(refactorings) {
+  var diffBar = document.querySelector(".diffbar .pr-review-tools");
+
+  if (!diffBar) {
+    return;
+  }
+
   var list = document.querySelector(".raid-index");
 
   if (!list) {
     list = document.createElement("div");
-    list.classList.add("float-right", "raid-index");
-    document.querySelector(".diffbar").append(list);
+    list.classList.add("diffbar-item", "raid-index");
+    diffBar.insertBefore(list, diffBar.firstChild);
   }
 
   var links = refactorings.map(function (refactoring) {
@@ -6058,7 +6070,7 @@ var loadRefactoringsIndex = function loadRefactoringsIndex(refactorings) {
 
     return "<a class=\"SelectMenu-item\" role=\"menuitem\" href=\"".concat(link, "\">").concat(refactoring.after_file_name, ":").concat(refactoring.after_line_number, " (").concat(refactoring.type, ")</a>");
   });
-  list.innerHTML = "\n    <div id=\"raid-pr-index\" class=\"d-flex flex-justify-end position-relative pr-review-tools\">\n        <details class=\"details-reset details-overlay\">\n            <summary class=\"btn btn-sm\" aria-haspopup=\"true\">\n            ".concat(refactorings.length, " Refactorings\n            </summary>\n            <div class=\"SelectMenu right-0\">\n            <div class=\"SelectMenu-modal\">\n                <div class=\"SelectMenu-list\">\n                    ").concat(links.join(""), "\n                </div>\n            </div>\n            </div>\n        </details>\n    </div>");
+  list.innerHTML = "\n    <div id=\"raid-pr-index\" class=\"d-flex flex-justify-end position-relative pr-review-tools\">\n        <details class=\"details-reset details-overlay\">\n            <summary class=\"btn btn-sm bg-orange text-white\" aria-haspopup=\"true\">\n            ".concat(refactorings.length, " Refactorings\n            </summary>\n            <div class=\"SelectMenu right-0\">\n            <div class=\"SelectMenu-modal\">\n                <div class=\"SelectMenu-list\">\n                    ").concat(links.join(""), "\n                </div>\n            </div>\n            </div>\n        </details>\n    </div>");
   list.querySelector(".SelectMenu-list").addEventListener("click", function () {
     list.querySelector("details").removeAttribute("open");
     sendEvent("click", "index");
@@ -6073,6 +6085,7 @@ var processRefactorings = function processRefactorings(refactorings) {
     var okRight = addRefactorings(fileMap, refactoring, RIGHT_SIDE);
     return !okLeft || !okRight;
   });
+  return refactorings.length !== missingRefactorings.length;
 };
 /**
  * Message receiver to handle data
@@ -6091,11 +6104,16 @@ chrome.runtime.onMessage.addListener(function (request) {
       if (!request.data || !request.data.refactorings) {
         return;
       } // load refactings index
+      // loadRefactoringsIndex(request.data.refactorings);
 
 
-      loadRefactoringsIndex(request.data.refactorings);
       debug("Loading: " + request.data.refactorings.length + " refactorings");
-      processRefactorings(request.data.refactorings);
+
+      if (processRefactorings(request.data.refactorings)) {
+        // load refactings index
+        loadRefactoringsIndex(request.data.refactorings);
+      }
+
   }
 });
 var debounceObserver = null;
@@ -6212,7 +6230,7 @@ window.addEventListener("load", function () {
     }
 
     popup.style.setProperty("top", top + "px");
-    popup.style.setProperty("left", Math.max(15, left - offset) + "px");
+    popup.style.setProperty("left", Math.max(32, left - offset) + "px");
     popup.setAttribute("data-time", +new Date());
     popup.setAttribute("data-type", type);
     popup.setAttribute("data-side", side);
@@ -6247,8 +6265,8 @@ window.addEventListener("load", function () {
     } else {
       popup.setAttribute("data-left", popup.style.getPropertyValue("left"));
       popup.setAttribute("data-right", popup.style.getPropertyValue("right"));
-      popup.style.setProperty("left", "15px");
-      popup.style.setProperty("right", "15px");
+      popup.style.setProperty("left", "32px");
+      popup.style.setProperty("right", "32px");
     }
 
     sendEvent("click", "maximize", popup.getAttribute("data-type"), 0, location);
