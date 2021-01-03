@@ -54,6 +54,11 @@
     box-shadow: 1px 1px 5px 0px rgba(0, 0, 0, 0.75);
 }
 
+[data-color-mode="dark"] .diff-refector-popup {
+    filter: invert(1) hue-rotate(180deg);
+    color: #000;
+}
+
 .diff-refector-popup-close {
     float: right;
 }
