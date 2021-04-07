@@ -15,4 +15,4 @@ jobs:
           LANGUAGE: Java
           REV_BEFORE: ${{ github.event.pull_request.base.sha }}
           REV_AFTER: ${{ github.event.pull_request.head.sha }}
-        uses: rodrigo-brito/refactoring-aware-review@action
+        uses: rodrigo-brito/refactoring-aware-diff@action

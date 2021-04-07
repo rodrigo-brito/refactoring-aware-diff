@@ -1,6 +1,6 @@
-package p8;
+package p3;
 
-public class A {
+public class B {
   public void m1() {
     System.out.println("m1");
   }
