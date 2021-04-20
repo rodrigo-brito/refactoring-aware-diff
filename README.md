@@ -4,6 +4,9 @@
 [![Chrome Web Store](https://img.shields.io/chrome-web-store/v/bclbegekihgpelanbbleaceefgmekjdd)](https://chrome.google.com/webstore/detail/refactoring-aware-diff/bclbegekihgpelanbbleaceefgmekjdd)
 [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
+- Accepted at 29th IEEE/ACM International Conference on Program Comprehension (ICPC), 2021 
+- Pre-print: https://arxiv.org/abs/2103.11453
+
 Code review is a key practice in modern software development. Currently, this practice is performed using textual diff tools, such as the one provided by GitHub. However, diff results can easily become complex and hard to understand. Refactorings, for example, are not represented at all in diff results. This makes diff understanding more complex because reviewers need to infer themselves that a given group of added and removed lines of code represent, for example, an extract method.
 
 ![result](https://user-images.githubusercontent.com/7620947/83893436-4ff0d300-a726-11ea-8a4d-48d34c36d115.gif)
