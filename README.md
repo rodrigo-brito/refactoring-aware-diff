@@ -4,8 +4,9 @@
 [![Chrome Web Store](https://img.shields.io/chrome-web-store/v/bclbegekihgpelanbbleaceefgmekjdd)](https://chrome.google.com/webstore/detail/refactoring-aware-diff/bclbegekihgpelanbbleaceefgmekjdd)
 [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-- Accepted at 29th IEEE/ACM International Conference on Program Comprehension (ICPC), 2021 
-- Pre-print: https://arxiv.org/abs/2103.11453
+- Published at 29th IEEE/ACM International Conference on Program Comprehension (ICPC), 2021 
+- ArXiv: https://arxiv.org/abs/2103.11453
+- IEEE Library: https://www.computer.org/csdl/proceedings-article/icpc/2021/140300a265/1tB7wfFt3ji
 
 Code review is a key practice in modern software development. Currently, this practice is performed using textual diff tools, such as the one provided by GitHub. However, diff results can easily become complex and hard to understand. Refactorings, for example, are not represented at all in diff results. This makes diff understanding more complex because reviewers need to infer themselves that a given group of added and removed lines of code represent, for example, an extract method.
 
@@ -25,17 +26,20 @@ As presented in this figure, this pipeline has three key components:
 
 -   A [Chrome plug-in](https://chrome.google.com/webstore/detail/refactoring-aware-review/bclbegekihgpelanbbleaceefgmekjdd) that seamlessly annotates diff chunks with refactoring data (see the following snapshot).
 
-#### Move Method
+#### Example of Move Method
 
 ![Move Method](https://user-images.githubusercontent.com/7620947/83657276-058d1c00-a597-11ea-811b-6761bdf2d58e.png)
 
-#### Pull Up Method
+#### Supported Refactorings
 
-![Pull Up Method](https://user-images.githubusercontent.com/7620947/76126249-595e8800-5fdd-11ea-8a1f-c066d44adbb8.png)
+RAID relies on RefDiff and support the following refactorings
 
-#### Rename Method
-
-![Rename Method](https://user-images.githubusercontent.com/7620947/76126250-59f71e80-5fdd-11ea-8e8a-e3ba73473007.png)
+| Language   | Language Refactorings                                                                  |
+|------------|----------------------------------------------------------------------------------------|
+| Java       | Move, Extract Function, Inline Function, Rename, Change Signature, Pull Up, Push Down  |
+| JavaScript |  Move, Extract Function, Inline Function, Rename, Change Signature, Pull Up, Push Down |
+| C          | Move, Extract Function, Inline Function, Rename, Change Signature                      |
+| Go         | Move, Extract Function, Inline Function, Rename, Change Signature                      |
 
 ## Installation
 
@@ -71,6 +75,20 @@ jobs:
 ## Simple Example
 
 We created a simple pull request with commits including toy refactorings, to illustrate the usage of our plug-in. See [here](https://github.com/rodrigo-brito/refactoring-aware-diff/pull/5/commits) (but first you need to install our plug in).
+
+## How cite RAID
+
+```bibtex
+@inproceedings{brito2021, 
+  author = {Rodrigo Brito and Marco Tulio Valente}, 
+  title = {{RAID}: Tool Support for Refactoring-Aware Code Reviews}, 
+  booktitle = {29th International Conference on Program Comprehension (ICPC)}, 
+  year = {2021}, 
+  pages = {265--275}
+}
+``` 
+
+DOI: https://doi.ieeecomputersociety.org/10.1109/ICPC52881.2021.00033
 
 ## License
 
